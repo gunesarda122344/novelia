@@ -1,0 +1,2863 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NOVELIA - Mobil Light Novel Platformu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f5ff', 100: '#e0ebff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#1e1b4b' },
+                        sepia: { bg: '#fbf0d9', card: '#f4e4c1', text: '#2d241e', border: '#e4d0aa' },
+                        oled: '#000000'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+
+    <style>
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 4px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        #view-reader.theme-dark { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        #view-reader.theme-oled { background-color: #000000 !important; color: #a1a1aa !important; }
+        #view-reader.theme-sepia { background-color: #fbf0d9 !important; color: #2d241e !important; }
+        #view-reader.theme-light { background-color: #ffffff !important; color: #1e293b !important; }
+
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .reader-content p { margin-bottom: 1.5em; text-indent: 1.25em; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .page-view { transition: opacity 0.2s ease-in-out; }
+
+        @keyframes spinner-rot { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-spinner {
+            border: 3px solid rgba(99, 102, 241, 0.2); border-top: 3px solid #6366f1; border-right: 3px solid #818cf8;
+            border-radius: 50%; width: 42px; height: 42px; animation: spinner-rot 0.8s linear infinite;
+        }
+        .safe-padding-top { padding-top: max(1.75rem, env(safe-area-inset-top, 1.75rem)); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
+
+<div id="app-splash" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500 space-y-6">
+    <div class="flex flex-col items-center space-y-3">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-2xl shadow-indigo-500/40 animate-pulse">
+            <i class="fa-solid fa-book-open-reader text-white text-4xl"></i>
+        </div>
+        <div class="text-center">
+            <h1 class="font-extrabold text-2xl tracking-wider bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">NOVELIA</h1>
+            <span class="text-xs text-indigo-400 font-medium tracking-widest uppercase">Mobil Light Novel</span>
+        </div>
+    </div>
+    <div class="flex flex-col items-center space-y-3 pt-6">
+        <div class="custom-spinner shadow-lg"></div>
+        <span class="text-xs text-slate-400 font-medium animate-pulse">İçerikler Yükleniyor...</span>
+    </div>
+</div>
+
+<div id="app" class="max-w-md mx-auto w-full min-h-screen flex flex-col bg-slate-900 shadow-2xl relative pb-20 border-x border-slate-800">
+
+    <header id="main-header" class="sticky top-0 z-40 glass border-b border-slate-800 px-4 pb-3 safe-padding-top flex items-center justify-between transition-all">
+        <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="handleLogoClick()">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid font-bold text-white text-lg fa-book-open-reader"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-none tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">NOVELIA</h1>
+                <span class="text-[10px] text-indigo-400 font-medium tracking-wider uppercase">Mobil Light Novel</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="openCoinShopModal()" class="flex items-center space-x-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full transition hover:bg-amber-500/20">
+                <i class="fa-solid fa-coins text-amber-400 text-[10px]"></i>
+                <span id="header-coin-count" class="text-amber-400 text-xs font-bold">0</span>
+            </button>
+            <button onclick="toggleSearchModal()" class="w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            </button>
+            <div id="admin-active-badge" class="hidden">
+                <button onclick="openAuthorModal()" class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center space-x-1 animate-pulse">
+                    <i class="fa-solid fa-shield-check"></i>
+                    <span>Yönetici</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 relative overflow-y-auto">
+        <!-- HOME PAGE -->
+        <section id="view-home" class="page-view space-y-6 pb-6">
+            <div class="relative px-4 pt-3">
+                <div id="featured-carousel" class="relative rounded-2xl overflow-hidden h-64 shadow-xl border border-slate-800/80 group">
+                </div>
+            </div>
+
+            <div id="resume-reading-container" class="px-4 hidden">
+            </div>
+
+            <div class="px-4 pt-1">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                        <h2 class="text-base font-bold text-white">Son Güncellenen Bölümler</h2>
+                    </div>
+                </div>
+                <div id="latest-chapters-list" class="space-y-2.5">
+                </div>
+            </div>
+
+            <div class="px-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-fire text-amber-500"></i>
+                        <h2 class="text-base font-bold text-white">Trend Romanlar</h2>
+                    </div>
+                </div>
+
+                <div id="trending-novels-grid" class="grid grid-cols-2 gap-3.5">
+                </div>
+            </div>
+        </section>
+
+        <!-- NOVEL DETAIL PAGE -->
+        <section id="view-detail" class="page-view hidden pb-8">
+            <div id="detail-hero" class="relative bg-slate-800">
+            </div>
+        </section>
+
+        <!-- READER PAGE -->
+        <section id="view-reader" class="page-view hidden min-h-screen flex flex-col relative theme-dark">
+            <div id="reader-top-bar" class="sticky top-0 z-30 px-4 py-3 bg-slate-900/90 backdrop-blur border-b border-slate-800/50 flex items-center justify-between transition-transform duration-300">
+                <button onclick="exitReader()" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300">
+                    <i class="fa-solid fa-chevron-left text-sm"></i>
+                </button>
+                <div class="text-center px-2 flex-1 truncate">
+                    <h4 id="reader-novel-title" class="text-xs text-indigo-400 font-semibold truncate">Roman Adı</h4>
+                    <p id="reader-chapter-title" class="text-xs text-slate-200 font-bold truncate">Bölüm 1</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="summarizeChapterAI()" title="AI ile Bölüm Özeti Çıkar" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-amber-400 hover:text-amber-300 transition">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                    </button>
+                    <button onclick="toggleAudioReader()" id="btn-tts" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-indigo-400 hover:text-indigo-300">
+                        <i class="fa-solid fa-volume-high text-xs"></i>
+                    </button>
+                    <button onclick="toggleReaderSettingsModal()" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300">
+                        <i class="fa-solid fa-font text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-5 py-6 flex-1 max-w-prose mx-auto w-full">
+                <div id="reader-chapter-heading" class="mb-6 pb-4 border-b border-slate-700/40 text-center">
+                    <span id="reader-meta-chapter-num" class="text-xs font-bold uppercase tracking-widest text-indigo-400 block mb-1">Bölüm 1</span>
+                    <h2 id="reader-meta-chapter-name" class="text-xl font-bold tracking-tight">Karanlığın Uyanışı</h2>
+                </div>
+
+                <article id="reader-text-container" class="reader-content text-base leading-relaxed tracking-normal transition-all duration-150">
+                </article>
+
+                <div class="mt-10 pt-6 border-t border-slate-800/60 space-y-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <button id="btn-prev-chap" onclick="navigateChapter(-1)" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Önceki Bölüm</span>
+                        </button>
+                        <button id="btn-next-chap" onclick="navigateChapter(1)" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/30">
+                            <span>Sonraki Bölüm</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 mt-6">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-indigo-400"></i>
+                            <span>Bu Bölüm Hakkında Yorum Yap</span>
+                        </h4>
+                        <div class="flex gap-2">
+                            <input type="text" id="reader-comment-input" placeholder="Düşüncelerini paylaş..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-white">
+                            <button onclick="addChapterComment()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition">Gönder</button>
+                        </div>
+                        <div id="reader-comments-list" class="mt-3 space-y-2 text-xs">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LIBRARY PAGE -->
+        <section id="view-library" class="page-view hidden px-4 py-4 space-y-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Kütüphanem</h2>
+                    <p class="text-xs text-slate-400">Kaydettiğin romanlar ve okuma geçmişin</p>
+                </div>
+                <div class="flex bg-slate-800 p-1 rounded-xl">
+                    <button onclick="switchLibraryTab('favorites')" id="tab-btn-favorites" class="px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">Favoriler</button>
+                    <button onclick="switchLibraryTab('history')" id="tab-btn-history" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Geçmiş</button>
+                </div>
+            </div>
+            <div id="library-novels-grid" class="grid grid-cols-2 gap-3.5">
+            </div>
+        </section>
+
+        <!-- PROFILE PAGE -->
+        <section id="view-profile" class="page-view hidden px-4 py-4 space-y-6">
+            <div class="bg-gradient-to-r from-slate-800 to-indigo-950/60 p-5 rounded-2xl border border-slate-700/60 relative overflow-hidden shadow-lg">
+                <div class="flex items-center space-x-4 relative z-10">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-2xl text-white font-bold shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-user-ninja"></i>
+                    </div>
+                    <div>
+                        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">Okuyucu</span>
+                        <h3 id="profile-display-name" class="text-lg font-bold text-white mt-1">Misafir Okuyucu</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-800/60 border border-slate-700/50 p-3.5 rounded-xl text-center">
+                    <i class="fa-solid fa-book text-indigo-400 text-lg mb-1"></i>
+                    <div id="stat-read-count" class="text-lg font-bold text-white">0</div>
+                    <div class="text-[10px] text-slate-400 uppercase font-medium">Favori Roman</div>
+                </div>
+                <div onclick="openCoinShopModal()" class="bg-slate-800/60 border border-amber-500/30 hover:bg-slate-800 p-3.5 rounded-xl text-center cursor-pointer transition">
+                    <i class="fa-solid fa-coins text-amber-400 text-lg mb-1"></i>
+                    <div id="profile-coin-count" class="text-lg font-bold text-white">0</div>
+                    <div class="text-[10px] text-amber-400 uppercase font-bold">Jeton Bakiye</div>
+                </div>
+            </div>
+
+            <div id="user-auth-card" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div id="logged-out-view" class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <h4 class="text-xs font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus text-indigo-400"></i>
+                            <span id="auth-tab-title">Okuyucu Hesabı Oluştur</span>
+                        </h4>
+                        <button onclick="toggleAuthMode()" id="btn-toggle-auth" class="text-[10px] text-indigo-400 hover:underline">Giriş Yap'a Geç</button>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="text" id="auth-username" placeholder="Kullanıcı Adı" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <input type="password" id="auth-password" placeholder="Şifre" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <button onclick="handleUserAuth()" id="btn-auth-submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition">
+                            Kayıt Ol
+                        </button>
+                    </div>
+                </div>
+                <div id="logged-in-view" class="hidden flex items-center justify-between py-1">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Aktif Oturum:</span>
+                        <span id="current-user-name" class="text-xs font-bold text-indigo-300"></span>
+                    </div>
+                    <button onclick="logoutUser()" class="px-3 py-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-lg text-xs font-semibold hover:bg-rose-500/30 transition">
+                        Çıkış Yap
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/40 rounded-2xl border border-slate-800 divide-y divide-slate-800">
+                <div id="profile-admin-item" onclick="openAuthorModal()" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition hidden">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                            <i class="fa-solid fa-feather-pointed text-sm"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-200">Yönetici Paneli (İçerik Yükle)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                </div>
+
+                <div id="admin-cheat-coin-item" onclick="cheatAddCoins()" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition hidden">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                            <i class="fa-solid fa-sack-dollar text-sm"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-amber-200">Admin: 1000 Jeton Ekle</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                </div>
+
+                <div onclick="alertModal('Bildirimler', 'Tüm favori roman bildirimleriniz aktif!')" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                            <i class="fa-solid fa-bell text-sm"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-200">Bildirim Ayarları</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                </div>
+                <div onclick="clearHistory()" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                            <i class="fa-solid fa-trash text-sm"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-rose-300">Okuma Geçmişini Temizle</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-coin-shop" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-amber-500/30 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-coins text-amber-400 text-xl"></i>
+                    <div>
+                        <h3 class="font-bold text-base text-white">Jeton Mağazası</h3>
+                        <p class="text-[10px] text-slate-400">Özel içerikleri & son bölümleri açın</p>
+                    </div>
+                </div>
+                <button onclick="closeCoinShopModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2.5">
+                <div onclick="buyCoinPackage('coin_10', 10, '₺24.00')" class="p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-2xl flex items-center justify-between cursor-pointer transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-bold">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Başlangıç Paketi</h4>
+                            <span class="text-[11px] text-amber-400 font-bold">10 Jeton</span>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1.5 bg-indigo-600 group-hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow">₺24.00</span>
+                </div>
+
+                <div onclick="buyCoinPackage('coin_33', 33, '₺60.00')" class="p-3 bg-gradient-to-r from-amber-950/40 to-slate-800 border border-amber-500/40 rounded-2xl flex items-center justify-between cursor-pointer transition group relative overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-amber-500 text-slate-950 font-extrabold text-[8px] px-2 py-0.5 rounded-bl-lg uppercase">Popüler</span>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/30 text-amber-300 flex items-center justify-center text-lg font-bold">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Avantaj Paketi</h4>
+                            <span class="text-[11px] text-amber-300 font-bold">33 Jeton (25+8)</span>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow">₺60.00</span>
+                </div>
+
+                <div onclick="buyCoinPackage('coin_60', 60, '₺145.00')" class="p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-2xl flex items-center justify-between cursor-pointer transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg font-bold">
+                            <i class="fa-solid fa-gem"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Efsane Paket</h4>
+                            <span class="text-[11px] text-purple-300 font-bold">60 Jeton</span>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1.5 bg-indigo-600 group-hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow">₺145.00</span>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-500 text-center leading-relaxed">
+                Satın alma işlemleri Google Play güvencesiyle gerçekleşmektedir.
+            </p>
+        </div>
+    </div>
+
+    <!-- AI Summary Result Modal -->
+    <div id="modal-ai-summary" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <span>AI Bölüm Özeti</span>
+                </h4>
+                <button onclick="closeAISummaryModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="ai-modal-content" class="min-h-[80px] max-h-60 overflow-y-auto pr-1"></div>
+            <button onclick="closeAISummaryModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl border border-slate-700 transition">Kapat</button>
+        </div>
+    </div>
+
+    <!-- Rewarded Ad Lock Modal -->
+    <div id="modal-rewarded-lock" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl relative overflow-hidden">
+            <div class="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-600 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-lg shadow-amber-500/30">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">Okuma Kilidi</span>
+                <h4 class="font-bold text-white text-base mt-2">Sonraki Bölümleri Aç</h4>
+                <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                    Sonraki 3 bölümün kilidini açmak için sponsorlu videoyu izleyebilir veya jeton kullanabilirsiniz.
+                </p>
+            </div>
+            <div class="space-y-2 pt-2">
+                <button onclick="watchRewardedAdToUnlock()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-play-circle text-base"></i>
+                    <span>Reklamı İzle ve Kilidi Aç</span>
+                </button>
+                <button onclick="unlockWithCoins(5)" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 text-xs font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-coins"></i>
+                    <span>5 Jeton Harcayarak Aç</span>
+                </button>
+                <button onclick="cancelRewardedUnlock()" class="w-full py-2 text-slate-500 hover:text-slate-400 text-xs font-semibold rounded-xl transition">
+                    Daha Sonra
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Chapter Lock Modal -->
+    <div id="modal-premium-lock" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl relative overflow-hidden">
+            <div class="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-600 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-lg shadow-amber-500/30">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">Premium Bölüm</span>
+                <h4 class="font-bold text-white text-base mt-2">Bu Bölüm Kilitli</h4>
+                <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                    Bu bölümü okumak için 5 jeton kullanmalısınız.
+                </p>
+            </div>
+            <div class="space-y-2 pt-2">
+                <button onclick="unlockPremiumChapter()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-coins"></i>
+                    <span>10 Jeton Harcayarak Aç</span>
+                </button>
+                <button onclick="closePremiumLockModal()" class="w-full py-2 text-slate-500 hover:text-slate-400 text-xs font-semibold rounded-xl transition">
+                    İptal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reader Settings Drawer -->
+    <div id="modal-reader-settings" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 space-y-5 animate-slide-up">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i>
+                    <span>Okuyucu Görünümü</span>
+                </h3>
+                <button onclick="toggleReaderSettingsModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-slate-400 mb-2 block">Renk Teması</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setReaderTheme('dark')" class="p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 text-xs font-bold flex flex-col items-center gap-1">
+                        <div class="w-4 h-4 rounded-full bg-slate-900 border border-slate-600"></div> Gece
+                    </button>
+                    <button onclick="setReaderTheme('oled')" class="p-2.5 rounded-xl border border-slate-700 bg-black text-slate-300 text-xs font-bold flex flex-col items-center gap-1">
+                        <div class="w-4 h-4 rounded-full bg-black border border-slate-600"></div> OLED
+                    </button>
+                    <button onclick="setReaderTheme('sepia')" class="p-2.5 rounded-xl border border-amber-800/40 bg-amber-100 text-amber-950 text-xs font-bold flex flex-col items-center gap-1">
+                        <div class="w-4 h-4 rounded-full bg-amber-200 border border-amber-400"></div> Krem
+                    </button>
+                    <button onclick="setReaderTheme('light')" class="p-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold flex flex-col items-center gap-1">
+                        <div class="w-4 h-4 rounded-full bg-white border border-slate-400"></div> Aydınlık
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-slate-400 mb-2 block">Yazı Tipi</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setReaderFont('font-sans')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs font-sans text-slate-200">Sans Inter</button>
+                    <button onclick="setReaderFont('font-serif')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs font-serif text-slate-200">Merriweather</button>
+                    <button onclick="setReaderFont('font-mono')" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-xs font-mono text-slate-200">Fira Mono</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-semibold text-slate-400">Metin Boyutu</label>
+                    <span id="font-size-label" class="text-xs font-bold text-indigo-400">16px</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs font-bold text-slate-400">A-</span>
+                    <input type="range" id="fontSizeRange" min="13" max="24" value="16" oninput="changeFontSize(this.value)" class="w-full accent-indigo-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-lg font-bold text-slate-300">A+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="modal-search" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex flex-col">
+        <div class="flex items-center space-x-3 bg-slate-800 rounded-2xl px-4 py-3 border border-slate-700">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input type="text" id="search-input" onkeyup="handleSearch(this.value)" placeholder="Roman başlığı veya yazar ara..." class="bg-transparent text-sm text-white placeholder-slate-400 focus:outline-none w-full">
+            <button onclick="toggleSearchModal()" class="text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="search-results" class="mt-4 flex-1 overflow-y-auto space-y-2">
+        </div>
+    </div>
+
+    <!-- Author Modal -->
+    <div id="modal-author" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-sm space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-feather text-indigo-400"></i>
+                    <span>Yönetici Paneli</span>
+                </h3>
+                <button onclick="closeAuthorModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="admin-auth-box" class="space-y-3 py-2">
+                <p class="text-xs text-slate-300">Bu alan yöneticilere özeldir. Giriş bilgilerinizi yazın:</p>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-semibold block mb-1">Kullanıcı Adı</label>
+                    <input type="text" id="admin-user-input" placeholder="Kullanıcı Adı" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 font-semibold block mb-1">Şifre</label>
+                    <input type="password" id="admin-pass-input" placeholder="Şifre" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <button onclick="verifyAdminLogin()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                    Giriş Yap
+                </button>
+            </div>
+
+            <form id="author-form" onsubmit="handlePublishNovel(event)" class="space-y-3 hidden">
+                <div class="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 p-2 rounded-xl text-emerald-300 text-xs font-semibold mb-2">
+                    <span><i class="fa-solid fa-shield-check mr-1"></i> Yeni Roman Oluştur</span>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Roman Başlığı</label>
+                    <input type="text" id="pub-title" required placeholder="Örn: Mushoku Tensei (LN)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Kategori</label>
+                    <select id="pub-genre" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                        <option value="Fantastik">Fantastik</option>
+                        <option value="Aksiyon">Aksiyon</option>
+                        <option value="Sistem">Sistem / LitRPG</option>
+                        <option value="Romantik">Romantik</option>
+                        <option value="Bilim Kurgu">Bilim Kurgu</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Kapak Resmi URL</label>
+                    <input type="url" id="pub-cover" required placeholder="https://resim-linki.com/kapak.jpg" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold text-slate-400 block">Özet / Konu</label>
+                        <button type="button" onclick="generateSynopsisAI('pub-title', 'pub-genre', 'pub-synopsis')" class="px-2 py-1 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Konu Üret
+                        </button>
+                    </div>
+                    <textarea id="pub-synopsis" required rows="3" placeholder="Hikayenin konusunu anlatın..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition">
+                    Romanı Oluştur
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Volume Modal -->
+    <div id="modal-add-volume" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-sm space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus text-indigo-400"></i>
+                    <span>Yeni Cilt Ekle</span>
+                </h3>
+                <button onclick="closeVolumeModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="handlePublishVolume(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Cilt Adı / Numarası</label>
+                    <input type="text" id="vol-title-input" required placeholder="Örn: Cilt 1: Başlangıç Cildi" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                    Cildi Oluştur
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Move Modal -->
+    <div id="modal-bulk-move" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        <span>Toplu Bölüm Cilde Taşı</span>
+                    </h3>
+                    <p class="text-[11px] text-slate-400">Aynı anda birden fazla bölümü tek tıkla cilde aktarın</p>
+                </div>
+                <button onclick="closeBulkMoveModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleBulkMoveChapters(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Hedef Cilt Seçin</label>
+                    <select id="bulk-target-volume-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                        <option value="">-- Ciltsiz (Bağımsız Bölümlere Taşı) --</option>
+                    </select>
+                </div>
+
+                <div class="p-3 bg-slate-800/50 rounded-xl border border-slate-700/50 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-300">Aralık Seçimi</span>
+                        <button type="button" onclick="applyBulkRangeSelection()" class="px-2.5 py-1 bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 text-[10px] font-bold rounded-lg transition border border-indigo-500/40">Seçimi Uygula</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="bulk-range-start" placeholder="Başlangıç (Örn: 1)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                        <input type="number" id="bulk-range-end" placeholder="Bitiş (Örn: 50)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-semibold text-slate-400">Taşınacak Bölümleri Seçin</label>
+                        <div class="space-x-2 text-[10px]">
+                            <button type="button" onclick="toggleSelectAllBulkChapters(true)" class="text-indigo-400 hover:underline">Tümünü Seç</button>
+                            <span class="text-slate-600">|</span>
+                            <button type="button" onclick="toggleSelectAllBulkChapters(false)" class="text-slate-400 hover:underline">Temizle</button>
+                        </div>
+                    </div>
+                    <div id="bulk-chapters-checkbox-list" class="max-h-56 overflow-y-auto space-y-1.5 pr-1 border border-slate-800 rounded-xl p-2 bg-slate-950/60">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                    Seçili Bölümleri Cilde Aktar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Chapter Modal -->
+    <div id="modal-add-chapter" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-indigo-400"></i>
+                        <span>Yeni Bölüm Ekle</span>
+                    </h3>
+                    <p id="target-novel-title" class="text-xs text-indigo-300 font-medium"></p>
+                </div>
+                <button onclick="closeChapterModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="chapter-form" onsubmit="handlePublishChapter(event)" class="space-y-3">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Cilt Seçimi</label>
+                    <select id="chap-volume-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                        <option value="">-- Ciltsiz (Bağımsız Bölüm) --</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Bölüm Başlığı</label>
+                    <input type="text" id="chap-title-input" required placeholder="Örn: Bölüm 1: Yeni Bir Başlangıç" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold text-slate-400">Bölüm Metni</label>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="improveChapterTextAI('chap-content-input')" class="px-2 py-1 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Geliştir
+                            </button>
+                            <button type="button" onclick="openInsertImageModal('chap-content-input')" class="px-2 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-image"></i>
+                                <span>+ Resim Ekle</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="chap-content-input" required rows="10" placeholder="Bölüm içeriğini buraya yazın..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none font-sans leading-relaxed"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition">
+                    Bölümü Yayınla
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Chapter Modal -->
+    <div id="modal-edit-chapter" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+                    <span>Bölümü Düzenle</span>
+                </h3>
+                <button onclick="closeEditChapterModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="edit-chapter-form" onsubmit="handleUpdateChapter(event)" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Cilt Bağlantısı</label>
+                    <select id="edit-chap-volume-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                        <option value="">-- Ciltsiz (Bağımsız Bölüm) --</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Bölüm Başlığı</label>
+                    <input type="text" id="edit-chap-title-input" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold text-slate-400 block">Bölüm Metni</label>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="improveChapterTextAI('edit-chap-content-input')" class="px-2 py-1 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Geliştir
+                            </button>
+                            <button type="button" onclick="openInsertImageModal('edit-chap-content-input')" class="px-2 py-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-image"></i>
+                                <span>+ Resim Ekle</span>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="edit-chap-content-input" required rows="10" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none font-sans leading-relaxed"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                    Bölümü Güncelle
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Novel Modal -->
+    <div id="modal-edit-novel" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden p-4 flex items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-sm space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+                    <span>Romanı Düzenle</span>
+                </h3>
+                <button onclick="closeEditNovelModal()" class="text-slate-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="edit-novel-form" onsubmit="handleUpdateNovel(event)" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Roman Başlığı</label>
+                    <input type="text" id="edit-pub-title" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Kategori</label>
+                    <select id="edit-pub-genre" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                        <option value="Fantastik">Fantastik</option>
+                        <option value="Aksiyon">Aksiyon</option>
+                        <option value="Sistem">Sistem / LitRPG</option>
+                        <option value="Romantik">Romantik</option>
+                        <option value="Bilim Kurgu">Bilim Kurgu</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-400 block">Kapak Resmi URL</label>
+                    <input type="url" id="edit-pub-cover" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold text-slate-400 block">Özet / Konu</label>
+                        <button type="button" onclick="generateSynopsisAI('edit-pub-title', 'edit-pub-genre', 'edit-pub-synopsis')" class="px-2 py-1 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Konu Üret
+                        </button>
+                    </div>
+                    <textarea id="edit-pub-synopsis" required rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                    Değişiklikleri Kaydet
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Insert Image Modal -->
+    <div id="modal-insert-image" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 w-full max-w-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-image text-indigo-400"></i>
+                    <span>Görsel Linki Ekle</span>
+                </h4>
+            </div>
+            <div class="space-y-1">
+                <p class="text-[11px] text-slate-400">Doğrudan açılan resmin internet adresini (URL) yapıştırın:</p>
+                <input type="url" id="img-url-input" placeholder="https://site.com/resim.jpg" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeInsertImageModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">İptal</button>
+                <button onclick="confirmInsertImage()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg transition">Ekle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Alert Modal -->
+    <div id="modal-alert" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 w-full max-w-xs text-center space-y-3">
+            <div class="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h4 id="alert-title" class="font-bold text-white text-sm">Bilgi</h4>
+            <p id="alert-msg" class="text-xs text-slate-300">İşlem tamamlandı.</p>
+            <button onclick="closeAlertModal()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl">Tamam</button>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-md w-full bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-8 py-2.5 flex justify-around items-center z-40">
+        <button onclick="navigateTo('home')" id="nav-home" class="flex flex-col items-center space-y-1 text-indigo-400 font-medium">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px]">Keşfet</span>
+        </button>
+        <button onclick="navigateTo('library')" id="nav-library" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-book-bookmark text-lg"></i>
+            <span class="text-[10px]">Kütüphane</span>
+        </button>
+        <button onclick="navigateTo('profile')" id="nav-profile" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-[10px]">Profil</span>
+        </button>
+    </nav>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = 'novelia-app';
+    const firebaseConfig = {
+        apiKey: "AIzaSyCS_iDrMRSbMg1irrVT4UWIZUlZkmgzSlE",
+        authDomain: "novelia-b8cd0.firebaseapp.com",
+        projectId: "novelia-b8cd0",
+        storageBucket: "novelia-b8cd0.firebasestorage.app",
+        messagingSenderId: "273214119610",
+        appId: "1:273214119610:web:00bc54a665298a32f36c83",
+        measurementId: "G-EXBMFYJJKZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const novelsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'novels');
+    const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+    const commentsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'comments');
+
+    window.db = db;
+    window.novelsColRef = novelsColRef;
+    window.usersColRef = usersColRef;
+    window.commentsColRef = commentsColRef;
+
+    let isFirstFirebaseSnapshot = true;
+
+    function hideSplashScreen() {
+        const splash = document.getElementById('app-splash');
+        if (splash && !splash.classList.contains('hidden')) {
+            splash.classList.add('opacity-0');
+            setTimeout(function() {
+                splash.classList.add('hidden');
+                splash.style.display = 'none';
+            }, 500);
+        }
+    }
+
+   function listenToCloudData() {
+        onSnapshot(novelsColRef, async function(snapshot) {
+            const cloudNovels = [];
+
+            for (let i = 0; i < snapshot.docs.length; i++) {
+                const docSnap = snapshot.docs[i];
+                const data = docSnap.data();
+                const novelData = Object.assign({ id: docSnap.id }, data);
+
+                let combinedChapters = Array.isArray(novelData.chapters) ? novelData.chapters.slice() : [];
+
+                try {
+                    const chapsCol = collection(db, 'artifacts', appId, 'public', 'data', 'novels', docSnap.id, 'chapters');
+                    const chapSnap = await getDocs(chapsCol);
+                    if (!chapSnap.empty) {
+                        chapSnap.forEach(function(cDoc) {
+                            const subChap = Object.assign({ id: cDoc.id }, cDoc.data());
+                            let exists = combinedChapters.some(function(item) { return item.id == subChap.id; });
+                            if (!exists) {
+                                combinedChapters.push(subChap);
+                            }
+                        });
+                    }
+                } catch(err) {
+                    console.error("Subcollection chapters load error:", err);
+                }
+
+                combinedChapters.sort(function(a, b) {
+                    const orderA = a.order !== undefined ? a.order : (typeof a.id === 'number' ? a.id : 0);
+                    const orderB = b.order !== undefined ? b.order : (typeof b.id === 'number' ? b.id : 0);
+                    return orderA - orderB;
+                });
+
+                novelData.chapters = combinedChapters;
+                cloudNovels.push(novelData);
+            }
+
+            if (cloudNovels.length > 0) {
+                window.novels = cloudNovels;
+                renderFeaturedCarousel();
+                renderResumeReading();
+                renderLatestChapters();
+                renderTrendingNovels();
+                if (window.activeNovelId && document.getElementById('view-detail') && !document.getElementById('view-detail').classList.contains('hidden')) {
+                    openNovelDetail(window.activeNovelId, false);
+                }
+            }
+
+            if (isFirstFirebaseSnapshot) {
+                isFirstFirebaseSnapshot = false;
+                hideSplashScreen();
+            }
+        }, function(error) {
+            console.error("Cloud novels error:", error);
+            hideSplashScreen();
+        });
+
+        onSnapshot(usersColRef, function(snapshot) {
+            const cloudUsers = [];
+            snapshot.forEach(function(docSnap) {
+                cloudUsers.push(docSnap.data());
+            });
+            if (cloudUsers.length > 0) {
+                window.registeredUsers = cloudUsers;
+                if (currentUser) {
+                    const u = window.registeredUsers.find(x => x.username.toLowerCase() === currentUser.username.toLowerCase());
+                    if (u && typeof u.coins !== 'undefined') {
+                        userCoinBalance = u.coins;
+                        updateCoinUI();
+                    }
+                }
+            }
+        }, function(error) {
+            console.error("Cloud users error:", error);
+        });
+
+        onSnapshot(commentsColRef, function(snapshot) {
+            const chapterCommentsObj = {};
+            const novelCommentsObj = {};
+            snapshot.forEach(function(docSnap) {
+                const data = docSnap.data();
+                if (data.key && data.key.indexOf('novel-') === 0) {
+                    if (!novelCommentsObj[data.key]) novelCommentsObj[data.key] = [];
+                    novelCommentsObj[data.key].push(data);
+                } else {
+                    if (!chapterCommentsObj[data.key]) chapterCommentsObj[data.key] = [];
+                    chapterCommentsObj[data.key].push(data);
+                }
+            });
+            window.chapterComments = chapterCommentsObj;
+            window.novelComments = novelCommentsObj;
+
+            if (window.activeNovelId !== null && window.activeChapterIndex !== null) {
+                renderChapterComments();
+            }
+            if (window.activeNovelId !== null && window.activeChapterIndex === null) {
+                renderNovelComments(window.activeNovelId);
+            }
+        }, function(error) {
+            console.error("Cloud comments error:", error);
+        });
+    }
+
+    async function initCloudAuth() {
+        try {
+            await signInAnonymously(auth);
+            console.log("Firebase anonim oturum başarıyla açıldı.");
+        } catch (err) {
+            console.warn("Firebase Auth uyarısı:", err);
+        }
+        listenToCloudData();
+    }
+
+    initCloudAuth();
+
+    window.saveNovelToCloud = async function(novel) {
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'novels', novel.id);
+            await setDoc(docRef, novel, { merge: true });
+        } catch (e) {
+            console.error("Error saving novel to cloud:", e);
+        }
+    };
+
+    window.saveChapterToCloud = async function(novelId, chapter) {
+        try {
+            const novel = window.novels.find(n => n.id === novelId);
+            if (novel) {
+                await window.saveNovelToCloud(novel);
+            }
+        } catch (e) {
+            console.error("Error saving chapter to cloud:", e);
+        }
+    };
+
+    window.deleteChapterFromCloud = async function(novelId, chapterId) {
+        try {
+            const novel = window.novels.find(n => n.id === novelId);
+            if (novel) {
+                await window.saveNovelToCloud(novel);
+            }
+        } catch (e) {
+            console.error("Error deleting chapter:", e);
+        }
+    };
+
+    window.saveUserToCloud = async function(user) {
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.username.toLowerCase());
+            await setDoc(docRef, user);
+        } catch (e) {
+            console.error("Error saving user to cloud:", e);
+        }
+    };
+
+    window.saveCommentToCloud = async function(key, comment) {
+        try {
+            await addDoc(commentsColRef, Object.assign({
+                key: key,
+                createdAt: Date.now()
+            }, comment));
+        } catch (e) {
+            console.error("Error saving comment to cloud:", e);
+        }
+    };
+</script>
+
+<script>
+    window.DEFAULT_COVER = "https://cdn.myanimelist.net/images/manga/2/255269.jpg";
+
+    function getInitialSeedNovels() {
+        return [
+            {
+                id: 'mushoku-tensei-ln',
+                title: 'Mushoku Tensei (LN)',
+                author: 'Rifujin na Magonote',
+                genre: 'Aksiyon',
+                views: '1199764',
+                cover: 'https://cdn.myanimelist.net/images/manga/2/255269.jpg',
+                featured: true,
+                synopsis: '34 yaşındaki bir NEET otaku, ailesi tarafından evden atılır. Bu bakir, tombalak, çirkin ve meteliksiz iyi adam, hayatının bir çıkmaza gittiğini fark eder.\n\nTam pişman olma noktasındayken, bir kamyonun aşırı hızla yoldaki 3 lise öğrencisine doğru hareket ettiğini görür. Tüm kuvvetini toplayıp onları kurtarır ama kamyonun altında kalarak ezilir ve ölür.\n\nGözünü bir daha açtığında, kılıç ve büyünün hüküm sürdüğü bir dünyada Rudeus Greyrat olarak yeni bir bedende dirilmiştir.',
+                volumes: [ { id: 'vol-1', title: 'Cilt 1: Yeniden Doğuş Cildi' } ],
+                chapters: [
+                    { id: 1, volumeId: 'vol-1', title: 'Cilt 1 Bölüm 0: Başlangıç Kitap Fotoğrafları', date: '11.02.2024', content: '...', isLocked: false },
+                    { id: 2, volumeId: 'vol-1', title: 'Cilt 1 Bölüm 1: Yeniden Doğuş', date: '11.02.2024', content: '...', isLocked: true }
+                ]
+            }
+        ];
+    }
+
+    window.novels = getInitialSeedNovels();
+
+    let savedLocks = JSON.parse(localStorage.getItem('novelia_custom_locks') || '{}');
+    window.novels.forEach(function(novel) {
+        if (savedLocks[novel.id] && novel.chapters) {
+            novel.chapters.forEach(function(chap) {
+                if (savedLocks[novel.id][chap.id] !== undefined) {
+                    chap.isLocked = savedLocks[novel.id][chap.id];
+                }
+            });
+        }
+    });
+
+    window.activeNovelId = null;
+    window.activeChapterIndex = null;
+
+    let activeGenre = "Tümü";
+    let favorites = JSON.parse(localStorage.getItem('novelia_favs') || '[]');
+    let readingHistory = JSON.parse(localStorage.getItem('novelia_history') || '[]');
+    let readChaptersMap = JSON.parse(localStorage.getItem('novelia_read_chapters') || '{}');
+    let currentLibraryTab = 'favorites';
+    let premiumUnlockedMap = JSON.parse(localStorage.getItem('novelia_premium_unlocked') || '{}');
+
+    window.chapterComments = {};
+    window.novelComments = {};
+    window.collapsedVolumes = window.collapsedVolumes || {};
+
+    let currentChapterPage = 1;
+    const CHAPTERS_PER_PAGE = 30;
+
+    window.navigationStack = ['home'];
+
+    window.registeredUsers = JSON.parse(localStorage.getItem('novelia_users') || '[]');
+    let currentUser = JSON.parse(localStorage.getItem('novelia_current_user') || 'null');
+    let isAuthLoginMode = false;
+
+    let userCoinBalance = 0;
+    if (currentUser) {
+        userCoinBalance = parseInt(localStorage.getItem('novelia_coins_' + currentUser.username) || '12');
+    }
+
+    let chapterReadCount = 0;
+    let pendingChapterNavParams = null;
+    let pendingPremiumUnlockParams = null;
+
+    let activeTargetTextareaId = 'chap-content-input';
+    let editTargetChapterIndex = null;
+
+    let isSpeaking = false;
+    let currentUtterance = null;
+
+    let readerSettings = { theme: 'dark', font: 'font-sans', fontSize: 16 };
+
+    const ADMIN_USER = "tenceretava321";
+    const ADMIN_PASS = "menderes321";
+    let isAdminAuthenticated = sessionStorage.getItem('novelia_admin_auth') === 'true';
+
+    let logoClickCount = 0;
+    let logoClickTimer = null;
+
+    window.addEventListener('popstate', function(event) {
+        if (window.navigationStack.length > 1) {
+            window.navigationStack.pop();
+            const previousState = window.navigationStack[window.navigationStack.length - 1];
+
+            if (previousState === 'home') navigateTo('home', false);
+            else if (previousState === 'library') navigateTo('library', false);
+            else if (previousState === 'profile') navigateTo('profile', false);
+            else if (previousState.startsWith('detail-')) {
+                const id = previousState.replace('detail-', '');
+                openNovelDetail(id, false);
+            } else if (previousState.startsWith('reader-')) {
+                const parts = previousState.replace('reader-', '').split('-');
+                openChapterInternal(parts[0], parseInt(parts[1]), false);
+            } else {
+                navigateTo('home', false);
+            }
+        } else {
+            navigateTo('home', false);
+        }
+    });
+
+    function pushNavState(state) {
+        if (window.navigationStack[window.navigationStack.length - 1] !== state) {
+            window.navigationStack.push(state);
+            history.pushState({ page: state }, '');
+        }
+    }
+
+    window.toggleVolumeAccordion = function(volId) {
+        if (window.collapsedVolumes[volId] === false) {
+            window.collapsedVolumes[volId] = true;
+        } else {
+            window.collapsedVolumes[volId] = false;
+        }
+        if (window.activeNovelId) {
+            openNovelDetail(window.activeNovelId, false);
+        }
+    };
+
+    function handleLogoClick() {
+        logoClickCount++;
+        clearTimeout(logoClickTimer);
+
+        if (logoClickCount >= 5) {
+            logoClickCount = 0;
+            openAuthorModal();
+        } else {
+            logoClickTimer = setTimeout(function() {
+                logoClickCount = 0;
+            }, 1500);
+            navigateTo('home');
+        }
+    }
+
+    function updateAdminUI() {
+        const adminBadge = document.getElementById('admin-active-badge');
+        const profileAdminItem = document.getElementById('profile-admin-item');
+        const adminCheatItem = document.getElementById('admin-cheat-coin-item');
+        if (isAdminAuthenticated) {
+            if (adminBadge) adminBadge.classList.remove('hidden');
+            if (profileAdminItem) profileAdminItem.classList.remove('hidden');
+            if (adminCheatItem) adminCheatItem.classList.remove('hidden');
+        } else {
+            if (adminBadge) adminBadge.classList.add('hidden');
+            if (profileAdminItem) profileAdminItem.classList.add('hidden');
+            if (adminCheatItem) adminCheatItem.classList.add('hidden');
+        }
+    }
+
+    function verifyAdminLogin() {
+        const userInput = document.getElementById('admin-user-input').value.trim();
+        const passInput = document.getElementById('admin-pass-input').value.trim();
+
+        if (userInput === ADMIN_USER && passInput === ADMIN_PASS) {
+            isAdminAuthenticated = true;
+            sessionStorage.setItem('novelia_admin_auth', 'true');
+            updateAdminUI();
+            document.getElementById('admin-auth-box').classList.add('hidden');
+            document.getElementById('author-form').classList.remove('hidden');
+            document.getElementById('admin-user-input').value = '';
+            document.getElementById('admin-pass-input').value = '';
+            alertModal('Yönetici Girişi', 'Hoş geldiniz! Yönetici paneli aktif.');
+            if (window.activeNovelId) openNovelDetail(window.activeNovelId);
+        } else {
+            alertModal('Hatalı Giriş', 'Kullanıcı adı veya şifre yanlış!');
+        }
+    }
+
+    function initApp() {
+        updateAdminUI();
+        updateUserAuthUI();
+        updateCoinUI();
+        renderFeaturedCarousel();
+        renderResumeReading();
+        renderLatestChapters();
+        renderTrendingNovels();
+        updateStats();
+
+        history.replaceState({ page: 'home' }, '');
+    }
+
+   function updateCoinUI() {
+        if (!currentUser && !isAdminAuthenticated) {
+            userCoinBalance = 0;
+        }
+
+        const headerCoin = document.getElementById('header-coin-count');
+        const profileCoin = document.getElementById('profile-coin-count');
+        if(headerCoin) headerCoin.innerText = userCoinBalance;
+        if(profileCoin) profileCoin.innerText = userCoinBalance;
+    }
+
+    window.cheatAddCoins = function() {
+        if (!isAdminAuthenticated) return;
+        userCoinBalance += 1000;
+        updateCoinUI();
+        alertModal('Admin Hilesi', 'Hesabınıza 1000 Jeton eklendi!');
+    };
+
+    function openCoinShopModal() {
+        document.getElementById('modal-coin-shop').classList.remove('hidden');
+    }
+
+    function closeCoinShopModal() {
+        document.getElementById('modal-coin-shop').classList.add('hidden');
+    }
+
+    function buyCoinPackage(productId, amount, price) {
+        if (!currentUser) {
+             alertModal('Üyelik Gerekli', 'Jeton satın almak için lütfen önce bir okuyucu hesabı oluşturup giriş yapın.');
+             closeCoinShopModal();
+             navigateTo('profile');
+             return;
+        }
+
+        if (window.AndroidAds && typeof window.AndroidAds.purchaseProduct === 'function') {
+            window.AndroidAds.purchaseProduct(productId, amount);
+            closeCoinShopModal();
+        } else {
+            if(confirm('Google Play Test Ortamı:\n' + amount + ' Jeton ' + price + ' karşılığında test hesabına eklensin mi?')) {
+                userCoinBalance += amount;
+                updateCoinUI();
+                alertModal('Satın Alma Başarılı', amount + ' Jeton hesabınıza yüklendi!');
+                closeCoinShopModal();
+            }
+        }
+    }
+
+    window.onPurchaseSuccess = function(productId, amountStr) {
+        const amount = parseInt(amountStr);
+        if (!isNaN(amount) && amount > 0) {
+            userCoinBalance += amount;
+
+            // 1. Arayüzü güncelle
+            updateCoinUI();
+
+            // 2. Kullanıcı oturum açmışsa yerel hafızayı güncelle
+            if (currentUser) {
+                localStorage.setItem('novelia_coins_' + currentUser.username, userCoinBalance.toString());
+
+                // 3. Firestore'a kalıcı olarak kaydet
+                if (window.registeredUsers) {
+                    const uIdx = window.registeredUsers.findIndex(x => x.username.toLowerCase() === currentUser.username.toLowerCase());
+                    if (uIdx > -1) {
+                        window.registeredUsers[uIdx].coins = userCoinBalance;
+                        if (window.saveUserToCloud) {
+                            window.saveUserToCloud(window.registeredUsers[uIdx]);
+                        }
+                    }
+                }
+            }
+
+            alertModal('Satın Alma Başarılı!', amount + ' Jeton hesabınıza başarıyla yüklendi.');
+        }
+    };
+
+    function toggleAuthMode() {
+        isAuthLoginMode = !isAuthLoginMode;
+        const title = document.getElementById('auth-tab-title');
+        const btnToggle = document.getElementById('btn-toggle-auth');
+        const btnSubmit = document.getElementById('btn-auth-submit');
+
+        if (isAuthLoginMode) {
+            title.innerText = "Giriş Yap";
+            btnToggle.innerText = "Kayıt Ol'a Geç";
+            btnSubmit.innerText = "Giriş Yap";
+        } else {
+            title.innerText = "Okuyucu Hesabı Oluştur";
+            btnToggle.innerText = "Giriş Yap'a Geç";
+            btnSubmit.innerText = "Kayıt Ol";
+        }
+    }
+
+    function handleUserAuth() {
+        const usernameInput = document.getElementById('auth-username').value.trim();
+        const passwordInput = document.getElementById('auth-password').value.trim();
+
+        if (!usernameInput || !passwordInput) {
+            alertModal('Eksik Bilgi', 'Lütfen kullanıcı adı ve şifre girin.');
+            return;
+        }
+
+        if (isAuthLoginMode) {
+            const user = window.registeredUsers.find(function(u) { return u.username.toLowerCase() === usernameInput.toLowerCase() && u.password === passwordInput; });
+            if (user) {
+                currentUser = { username: user.username };
+                localStorage.setItem('novelia_current_user', JSON.stringify(currentUser));
+
+                userCoinBalance = parseInt(localStorage.getItem('novelia_coins_' + currentUser.username) || '12');
+                updateCoinUI();
+
+                document.getElementById('auth-username').value = '';
+                document.getElementById('auth-password').value = '';
+                updateUserAuthUI();
+                alertModal('Hoş Geldiniz!', 'Giriş yapıldı: ' + user.username);
+            } else {
+                alertModal('Giriş Başarısız', 'Kullanıcı adı veya şifre hatalı.');
+            }
+        } else {
+            const exists = window.registeredUsers.some(function(u) { return u.username.toLowerCase() === usernameInput.toLowerCase(); });
+            if (exists) {
+                alertModal('Kullanıcı Adı Alınmış', 'Bu kullanıcı adı başka biri tarafından kullanılıyor.');
+                return;
+            }
+
+            const newUser = { username: usernameInput, password: passwordInput, coins: 12 };
+            window.registeredUsers.push(newUser);
+            localStorage.setItem('novelia_users', JSON.stringify(window.registeredUsers));
+
+            if (window.saveUserToCloud) {
+                window.saveUserToCloud(newUser);
+            }
+
+            currentUser = { username: newUser.username };
+            userCoinBalance = 12;
+            localStorage.setItem('novelia_current_user', JSON.stringify(currentUser));
+
+            document.getElementById('auth-username').value = '';
+            document.getElementById('auth-password').value = '';
+            updateUserAuthUI();
+            updateCoinUI();
+            alertModal('Kayıt Başarılı', 'Tebrikler ' + newUser.username + ', hesabınız oluşturuldu! Başlangıç hediyesi olarak 12 Jeton hesabınıza eklendi.');
+        }
+    }
+
+    function logoutUser() {
+        currentUser = null;
+        userCoinBalance = 0;
+        localStorage.removeItem('novelia_current_user');
+        updateCoinUI();
+        updateUserAuthUI();
+        alertModal('Çıkış Yapıldı', 'Hesabınızdan çıkış yaptınız.');
+    }
+
+    function updateUserAuthUI() {
+        const loggedOutView = document.getElementById('logged-out-view');
+        const loggedInView = document.getElementById('logged-in-view');
+        const currentUserName = document.getElementById('current-user-name');
+        const profileDisplayName = document.getElementById('profile-display-name');
+
+        if (currentUser) {
+            if (loggedOutView) loggedOutView.classList.add('hidden');
+            if (loggedInView) loggedInView.classList.remove('hidden');
+            if (currentUserName) currentUserName.innerText = currentUser.username;
+            if (profileDisplayName) profileDisplayName.innerText = currentUser.username;
+        } else {
+            if (loggedOutView) loggedOutView.classList.remove('hidden');
+            if (loggedInView) loggedInView.classList.add('hidden');
+            if (profileDisplayName) profileDisplayName.innerText = "Misafir Okuyucu";
+        }
+    }
+
+    function renderResumeReading() {
+        const container = document.getElementById('resume-reading-container');
+        if (!container) return;
+        if (readingHistory.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+        const lastRead = readingHistory[0];
+        const novel = window.novels.find(function(n) { return n.id === lastRead.novelId; });
+        if (!novel || !novel.chapters[lastRead.chapterIndex]) {
+            container.classList.add('hidden');
+            return;
+        }
+        const chap = novel.chapters[lastRead.chapterIndex];
+        container.classList.remove('hidden');
+        container.innerHTML = `
+            <div onclick="openChapter('${novel.id}', ${lastRead.chapterIndex})" class="p-3 bg-gradient-to-r from-indigo-950/80 to-slate-900 border border-indigo-500/30 rounded-2xl flex items-center justify-between cursor-pointer hover:border-indigo-500/60 transition shadow-lg">
+                <div class="flex items-center space-x-3 truncate">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-book-open text-base"></i>
+                    </div>
+                    <div class="truncate">
+                        <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider block">Kaldığın Yerden Devam Et</span>
+                        <h4 class="text-xs font-bold text-white truncate">${novel.title}</h4>
+                        <p class="text-[11px] text-slate-400 truncate">${chap.title}</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 ml-2 shadow-md">
+                    <i class="fa-solid fa-play text-xs"></i>
+                </div>
+            </div>
+        `;
+    }
+
+    function navigateTo(viewId, pushHistory = true) {
+        if (viewId === 'home') {
+            window.activeChapterIndex = null;
+        }
+        const views = ['home', 'detail', 'reader', 'library', 'profile'];
+        views.forEach(function(v) {
+            const el = document.getElementById('view-' + v);
+            if (el) el.classList.add('hidden');
+        });
+
+        const target = document.getElementById('view-' + viewId);
+        if (target) target.classList.remove('hidden');
+
+        ['home', 'library', 'profile'].forEach(function(nav) {
+            const btn = document.getElementById('nav-' + nav);
+            if (btn) {
+                if (nav === viewId) {
+                    btn.className = "flex flex-col items-center space-y-1 text-indigo-400 font-medium";
+                } else {
+                    btn.className = "flex flex-col items-center space-y-1 text-slate-400 hover:text-slate-200";
+                }
+            }
+        });
+
+        if (pushHistory) {
+            pushNavState(viewId);
+        }
+
+        if (viewId === 'library') renderLibrary();
+        if (viewId === 'home') {
+            window.activeNovelId = null;
+            renderResumeReading();
+            renderTrendingNovels();
+            renderLatestChapters();
+        }
+    }
+
+    function toggleFavorite(novelId) {
+        if (favorites.includes(novelId)) {
+            favorites = favorites.filter(function(id) { return id !== novelId; });
+        } else {
+            favorites.push(novelId);
+        }
+        localStorage.setItem('novelia_favs', JSON.stringify(favorites));
+        updateStats();
+        if (window.activeNovelId === novelId) {
+            openNovelDetail(novelId, false);
+        }
+    }
+
+    function renderFeaturedCarousel() {
+        const container = document.getElementById('featured-carousel');
+        if (!container) return;
+
+        if (window.novels.length === 0) {
+            container.innerHTML = `
+                <div class="w-full h-full bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center p-6 space-y-2">
+                    <i class="fa-solid fa-book-open-reader text-3xl text-indigo-400 mb-1"></i>
+                    <h3 class="text-sm font-bold text-white">Henüz Roman Bulunmuyor</h3>
+                    <p class="text-xs text-slate-400">Yönetici girişi yaparak ilk romanınızı hemen oluşturabilirsiniz.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const featured = window.novels.filter(function(n) { return n.featured; })[0] || window.novels[0];
+
+        container.innerHTML = `
+            <img src="${featured.cover}" class="w-full h-full object-cover" onerror="this.src=window.DEFAULT_COVER">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent flex flex-col justify-end p-4">
+                <span class="px-2.5 py-1 bg-indigo-600 text-white text-[10px] font-bold uppercase rounded-lg w-fit mb-2 shadow-lg">Öne Çıkan Seri</span>
+                <h2 class="text-lg font-bold text-white leading-tight mb-1 cursor-pointer hover:underline" onclick="openNovelDetail('${featured.id}')">${featured.title}</h2>
+                <p class="text-xs text-slate-300 line-clamp-2 mb-3">${featured.synopsis}</p>
+                <div class="flex items-center justify-between">
+                    <button onclick="openNovelDetail('${featured.id}')" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg transition">Oku</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderLatestChapters() {
+        const container = document.getElementById('latest-chapters-list');
+        if (!container) return;
+
+        let recent = [];
+        window.novels.forEach(function(n) {
+            if (n.chapters) {
+                n.chapters.forEach(function(chap, idx) {
+                    recent.push({
+                        novelId: n.id,
+                        novelTitle: n.title,
+                        cover: n.cover,
+                        chapIndex: idx,
+                        chapTitle: chap.title,
+                        date: chap.date || 'Yeni',
+                        isLocked: chap.isLocked || false
+                    });
+                });
+            }
+        });
+
+        if (recent.length === 0) {
+            container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Henüz yayınlanmış bir bölüm yok.</p>`;
+            return;
+        }
+
+        recent.reverse();
+
+        container.innerHTML = recent.slice(0, 3).map(function(item) {
+            return `
+            <div onclick="openChapter('${item.novelId}', ${item.chapIndex})" class="p-2.5 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 rounded-xl flex items-center justify-between cursor-pointer transition">
+                <div class="flex items-center space-x-3 truncate">
+                    <img src="${item.cover}" class="w-10 h-10 object-cover rounded-lg shrink-0" onerror="this.src=window.DEFAULT_COVER">
+                    <div class="truncate flex items-center gap-1.5">
+                        ${item.isLocked && !isAdminAuthenticated ? '<i class="fa-solid fa-lock text-amber-500 text-[10px]"></i>' : ''}
+                        <div>
+                            <h4 class="text-xs font-bold text-white truncate">${item.novelTitle}</h4>
+                            <span class="text-[11px] text-indigo-400 font-medium truncate block">${item.chapTitle}</span>
+                        </div>
+                    </div>
+                </div>
+                <span class="text-[10px] text-slate-400 px-2 py-1 bg-slate-800/80 rounded-md shrink-0 ml-2">${item.date}</span>
+            </div>
+            `;
+        }).join('');
+    }
+
+    function renderTrendingNovels() {
+        const container = document.getElementById('trending-novels-grid');
+        if (!container) return;
+
+        if (window.novels.length === 0) {
+            container.innerHTML = `<p class="col-span-2 text-xs text-slate-500 text-center py-6">Henüz roman bulunmuyor.</p>`;
+            return;
+        }
+
+        container.innerHTML = window.novels.map(function(n) {
+            return `
+            <div onclick="openNovelDetail('${n.id}')" class="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden flex flex-col group cursor-pointer hover:border-indigo-500/50 transition shadow-lg">
+                <div class="relative h-44 overflow-hidden">
+                    <img src="${n.cover}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src=window.DEFAULT_COVER">
+                    <div class="absolute bottom-2 left-2 bg-indigo-600/90 backdrop-blur px-2 py-0.5 rounded-md text-[9px] font-semibold text-white">
+                        ${n.genre}
+                    </div>
+                </div>
+                <div class="p-3 flex-1 flex flex-col justify-between space-y-1">
+                    <div>
+                        <h3 class="text-xs font-bold text-white line-clamp-2 group-hover:text-indigo-300 transition">${n.title}</h3>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-800/60">
+                        <span><i class="fa-solid fa-layer-group text-indigo-400 mr-1"></i>${(n.chapters || []).length} Bölüm</span>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    function openNovelDetail(novelId, pushHistory = true) {
+        window.activeNovelId = novelId;
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel) return;
+
+        const container = document.getElementById('detail-hero');
+        const isFav = favorites.includes(novelId);
+        const chapters = novel.chapters || [];
+        const volumes = novel.volumes || [];
+
+        const novelReadSet = new Set((readChaptersMap[novelId] || []).map(function(id) { return id.toString(); }));
+        const lastReadRecord = readingHistory.find(function(h) { return h.novelId === novelId; });
+        const lastReadChapterIndex = lastReadRecord ? lastReadRecord.chapterIndex : null;
+
+        let volumesHtml = '';
+        let unvolumedChapters = [];
+
+        if (volumes.length > 0) {
+            volumesHtml = volumes.map(function(vol) {
+                const volChapters = chapters.filter(function(c) { return c.volumeId === vol.id; });
+                const isCollapsed = window.collapsedVolumes[vol.id] !== false;
+
+                let chapterHtml = volChapters.length === 0 ? `<p class="text-[11px] text-slate-500 italic py-1 text-center">Bu ciltte henüz bölüm yok.</p>` :
+                    volChapters.map(function(c) {
+                        const globalIdx = chapters.findIndex(function(item) { return item.id === c.id; });
+                        const isRead = novelReadSet.has(c.id.toString());
+                        const isPremium = c.isLocked;
+                        const isUnlocked = premiumUnlockedMap[novel.id] && premiumUnlockedMap[novel.id].includes(c.id.toString());
+                        const showLock = isPremium && !isUnlocked && !isAdminAuthenticated;
+
+                        let titleColor = 'text-slate-200 hover:text-indigo-300 font-semibold';
+                        if (isRead) titleColor = 'text-amber-400 font-bold';
+                        else if (showLock) titleColor = 'text-slate-500';
+
+                        return `
+                            <div class="p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl flex items-center justify-between text-xs transition">
+                                <span onclick="openChapter('${novel.id}', ${globalIdx})" class="truncate flex-1 cursor-pointer ${titleColor}">
+                                    ${showLock ? '<i class="fa-solid fa-lock text-rose-400 mr-1 text-[10px]"></i>' : ''}
+                                    ${isPremium && isUnlocked && !isAdminAuthenticated ? '<i class="fa-solid fa-lock-open text-emerald-400 mr-1 text-[10px]"></i>' : ''}
+                                    ${c.title}
+                                </span>
+                                ${isAdminAuthenticated ? `
+                                    <div class="flex items-center space-x-1 shrink-0 ml-2">
+                                        <button onclick="toggleChapterLock('${novel.id}', ${globalIdx})" title="Kilidi Değiştir" class="w-6 h-6 rounded ${isPremium ? 'bg-amber-500 text-slate-900' : 'bg-slate-700 text-slate-400'} text-[10px] transition"><i class="fa-solid fa-key"></i></button>
+                                        <button onclick="openEditChapterModal('${novel.id}', ${globalIdx})" class="w-6 h-6 rounded bg-amber-500/20 text-amber-300 text-[10px]"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="deleteChapter('${novel.id}', ${globalIdx})" class="w-6 h-6 rounded bg-rose-500/20 text-rose-300 text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+
+                return `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
+                        <div onclick="window.toggleVolumeAccordion('${vol.id}')" class="p-3.5 bg-amber-600/90 hover:bg-amber-600 text-white flex items-center justify-between cursor-pointer transition select-none">
+                            <div class="flex items-center space-x-2.5 truncate">
+                                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}"></i>
+                                <h4 class="text-xs font-extrabold uppercase tracking-wide truncate">${vol.title}</h4>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <span class="text-[10px] bg-black/30 px-2 py-0.5 rounded-full font-bold">${volChapters.length} Bölüm</span>
+                                ${isAdminAuthenticated ? `
+                                    <button onclick="event.stopPropagation(); deleteVolume('${novel.id}', '${vol.id}')" title="Cildi Sil" class="w-6 h-6 rounded-lg bg-black/40 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] transition">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="${isCollapsed ? 'hidden' : 'block'} p-3 space-y-1.5 bg-slate-900/90 border-t border-slate-800">
+                            ${chapterHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            unvolumedChapters = chapters.filter(function(c) { return !c.volumeId; });
+        } else {
+            unvolumedChapters = chapters;
+        }
+
+        const totalUnvolumed = unvolumedChapters.length;
+        const totalPages = Math.ceil(totalUnvolumed / CHAPTERS_PER_PAGE) || 1;
+        if (currentChapterPage > totalPages) currentChapterPage = totalPages;
+
+        const startIndex = (currentChapterPage - 1) * CHAPTERS_PER_PAGE;
+        const paginatedChapters = unvolumedChapters.slice(startIndex, startIndex + CHAPTERS_PER_PAGE);
+
+        let paginationControlsHtml = '';
+        if (totalPages > 1) {
+            let pageBtns = '';
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentChapterPage - 1 && p <= currentChapterPage + 1)) {
+                    pageBtns += `
+                        <button onclick="changeChapterPage(${p})" class="w-10 h-10 rounded-xl text-xs font-bold transition ${p === currentChapterPage ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/40 border border-amber-500' : 'bg-slate-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700'}">
+                            ${p}
+                        </button>
+                    `;
+                } else if (p === 2 && currentChapterPage > 3) {
+                    pageBtns += `<span class="w-10 h-10 flex items-center justify-center text-slate-500 text-xs font-bold bg-slate-800/50 border border-slate-700/50 rounded-xl">...</span>`;
+                } else if (p === totalPages - 1 && currentChapterPage < totalPages - 2) {
+                    pageBtns += `<span class="w-10 h-10 flex items-center justify-center text-slate-500 text-xs font-bold bg-slate-800/50 border border-slate-700/50 rounded-xl">...</span>`;
+                }
+            }
+
+            paginationControlsHtml = `
+                <div class="flex flex-wrap items-center justify-center gap-2 pt-4">
+                    ${pageBtns}
+                    ${currentChapterPage < totalPages ? `
+                        <button onclick="changeChapterPage(${currentChapterPage + 1})" class="w-10 h-10 rounded-xl bg-slate-800 text-slate-300 border border-slate-700/80 hover:bg-slate-700 text-xs font-bold flex items-center justify-center">
+                            »
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        let unvolumedHtml = '';
+        if (unvolumedChapters.length > 0) {
+            unvolumedHtml = `
+                <div class="space-y-2">
+                    ${volumes.length > 0 ? `<h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ciltsiz Bölümler (${unvolumedChapters.length})</h4>` : ''}
+                    ${paginatedChapters.map(function(c) {
+                        const globalIdx = chapters.findIndex(function(item) { return item.id === c.id; });
+                        const isRead = novelReadSet.has(c.id.toString());
+                        const isPremium = c.isLocked;
+                        const isUnlocked = premiumUnlockedMap[novel.id] && premiumUnlockedMap[novel.id].includes(c.id.toString());
+                        const showLock = isPremium && !isUnlocked && !isAdminAuthenticated;
+
+                        let titleColor = 'text-white';
+                        if (isRead) titleColor = 'text-amber-400 font-bold';
+                        else if (showLock) titleColor = 'text-slate-500';
+
+                        return `
+                            <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between transition">
+                                <div onclick="openChapter('${novel.id}', ${globalIdx})" class="flex items-center space-x-3 cursor-pointer flex-1 truncate mr-2">
+                                    <div class="w-8 h-8 rounded-lg ${isRead ? 'bg-amber-500/20 text-amber-400 font-extrabold' : 'bg-indigo-500/10 text-indigo-400 font-bold'} text-xs flex items-center justify-center shrink-0">
+                                        ${globalIdx + 1}
+                                    </div>
+                                    <div class="truncate flex items-center gap-1.5">
+                                        ${showLock ? '<i class="fa-solid fa-lock text-rose-400 text-[10px]"></i>' : ''}
+                                        ${isPremium && isUnlocked && !isAdminAuthenticated ? '<i class="fa-solid fa-lock-open text-emerald-400 text-[10px]"></i>' : ''}
+                                        <div>
+                                            <h4 class="text-xs truncate ${titleColor}">${c.title}</h4>
+                                            <span class="text-[10px] text-slate-400">${c.date || 'Tarih Belirtilmedi'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-1.5 shrink-0">
+                                    ${isAdminAuthenticated ? `
+                                        <button onclick="toggleChapterLock('${novel.id}', ${globalIdx})" title="Kilidi Değiştir" class="w-7 h-7 rounded-lg ${isPremium ? 'bg-amber-500 text-slate-900' : 'bg-slate-700 text-slate-400'} border border-slate-600 flex items-center justify-center text-xs transition">
+                                            <i class="fa-solid fa-key"></i>
+                                        </button>
+                                        <button onclick="openEditChapterModal('${novel.id}', ${globalIdx})" title="Bölümü Düzenle" class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center text-xs hover:bg-amber-500/40 transition">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </button>
+                                        <button onclick="deleteChapter('${novel.id}', ${globalIdx})" title="Bölümü Sil" class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center justify-center text-xs hover:bg-rose-500/40 transition">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    ` : `
+                                        <button onclick="openChapter('${novel.id}', ${globalIdx})" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center text-xs">
+                                            <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                    ${paginationControlsHtml}
+                </div>
+            `;
+        }
+
+        const prevChapterTitle = (chapters && chapters[lastReadChapterIndex]) ? chapters[lastReadChapterIndex].title : 'Bölüm';
+
+        container.innerHTML = `
+            <div class="relative h-64 overflow-hidden">
+                <img src="${novel.cover}" class="w-full h-full object-cover blur-sm opacity-40" onerror="this.src=window.DEFAULT_COVER">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent"></div>
+                <button onclick="navigateTo('home')" class="absolute top-4 left-4 w-9 h-9 rounded-xl bg-slate-900/80 backdrop-blur text-white flex items-center justify-center border border-slate-700">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </button>
+                <button onclick="toggleFavorite('${novel.id}')" class="absolute top-4 right-4 w-9 h-9 rounded-xl ${isFav ? 'bg-rose-600 text-white' : 'bg-slate-900/80 text-slate-300'} backdrop-blur flex items-center justify-center border border-slate-700">
+                    <i class="fa-solid fa-heart text-sm"></i>
+                </button>
+                <div class="absolute bottom-4 left-4 right-4 flex gap-4 items-end">
+                    <img src="${novel.cover}" class="w-24 h-32 object-cover rounded-xl shadow-2xl border-2 border-slate-700 shrink-0" onerror="this.src=window.DEFAULT_COVER">
+                    <div class="space-y-1">
+                        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase border border-indigo-500/30">${novel.genre}</span>
+                        <h2 class="text-base font-bold text-white leading-snug">${novel.title}</h2>
+                        <div class="flex items-center space-x-3 text-xs text-slate-300 pt-1">
+                            <span><i class="fa-solid fa-eye text-indigo-400 mr-1"></i>${novel.views || 1} Okunma</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-5">
+                ${isAdminAuthenticated ? `
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="openAddVolumeModal('${novel.id}')" class="py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] rounded-xl shadow-lg flex items-center justify-center space-x-1 transition border border-indigo-500/40">
+                            <i class="fa-solid fa-folder-plus"></i> <span>+ Cilt Ekle</span>
+                        </button>
+                        <button onclick="openBulkMoveModal('${novel.id}')" class="py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[11px] rounded-xl shadow-lg flex items-center justify-center space-x-1 transition border border-purple-500/40">
+                            <i class="fa-solid fa-list-check"></i> <span>Toplu Cilde Taşı</span>
+                        </button>
+                        <button onclick="openAddChapterModal('${novel.id}')" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-xl shadow-lg flex items-center justify-center space-x-1 transition border border-emerald-500/40">
+                            <i class="fa-solid fa-plus-circle"></i> <span>+ Bölüm Ekle</span>
+                        </button>
+                        <button onclick="openEditNovelModal('${novel.id}')" class="py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] rounded-xl shadow-lg flex items-center justify-center space-x-1 transition border border-amber-500/40">
+                            <i class="fa-solid fa-pen-to-square"></i> <span>Düzenle</span>
+                        </button>
+                    </div>
+                ` : ''}
+
+                <div class="flex items-center gap-3">
+                    <button onclick="${
+                        lastReadChapterIndex !== null
+                        ? `openChapter('${novel.id}', ${lastReadChapterIndex})`
+                        : (chapters.length > 0 ? `openChapter('${novel.id}', 0)` : `alertModal('Bölüm Yok', 'Bu romana henüz bölüm eklenmedi.')`)
+                    }" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 transition">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>${
+                            lastReadChapterIndex !== null
+                            ? 'Kaldığın Yerden Devam Et (' + prevChapterTitle + ')'
+                            : (chapters.length > 0 ? 'Okumaya Başla (Bölüm 1)' : 'Henüz Bölüm Yok')
+                        }</span>
+                    </button>
+                    <button onclick="toggleFavorite('${novel.id}')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 ${isFav ? 'text-rose-400' : 'text-slate-300'} font-bold text-xs rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-heart"></i>
+                        <span>${isFav ? 'Favorilerde' : 'Favorile'}</span>
+                    </button>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Özet</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">${novel.synopsis}</p>
+                </div>
+
+                <div class="space-y-4">
+                    ${volumesHtml}
+                    ${unvolumedHtml}
+                    ${chapters.length === 0 ? `<p class="text-xs text-slate-500 text-center py-4 bg-slate-900/40 rounded-xl">Henüz bölüm veya cilt yüklenmemiş.</p>` : ''}
+                </div>
+
+                <!-- Novel Comments Section -->
+                <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 mt-6">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-comments text-indigo-400"></i>
+                        <span>Seri Hakkında Yorumlar</span>
+                    </h4>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="novel-comment-input" placeholder="Seri hakkındaki düşünceleriniz..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-white">
+                        <button onclick="addNovelComment('${novel.id}')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition">Gönder</button>
+                    </div>
+                    <div id="novel-comments-list" class="space-y-2.5">
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        if (pushHistory) {
+            pushNavState('detail-' + novelId);
+        }
+
+        navigateTo('detail', false);
+        renderNovelComments(novel.id);
+    }
+
+    function addNovelComment(novelId) {
+        const input = document.getElementById('novel-comment-input');
+        const commentText = input.value.trim();
+        if (!commentText) return;
+
+        const userName = currentUser ? currentUser.username : "Misafir Okuyucu";
+        const key = 'novel-' + novelId;
+
+        const commentObj = {
+            user: userName,
+            text: commentText,
+            time: "Şimdi"
+        };
+
+        if (window.saveCommentToCloud) {
+            window.saveCommentToCloud(key, commentObj);
+        } else {
+            if (!window.novelComments[key]) window.novelComments[key] = [];
+            window.novelComments[key].unshift(commentObj);
+            renderNovelComments(novelId);
+        }
+
+        input.value = '';
+    }
+
+    function renderNovelComments(novelId) {
+        const key = 'novel-' + novelId;
+        const comments = window.novelComments[key] || [];
+        const list = document.getElementById('novel-comments-list');
+        if (!list) return;
+
+        if (comments.length === 0) {
+            list.innerHTML = `<p class="text-xs text-slate-500 text-center py-3 bg-slate-900/30 rounded-xl">Bu seri için henüz genel yorum yapılmamış.</p>`;
+            return;
+        }
+
+        list.innerHTML = comments.map(function(c) {
+            return `
+            <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60 transition hover:border-indigo-500/30">
+                <div class="flex justify-between items-center mb-1.5">
+                    <span class="text-[11px] text-indigo-300 font-bold bg-indigo-500/10 px-2 py-0.5 rounded-md">${c.user}</span>
+                    <span class="text-[10px] text-slate-500">${c.time}</span>
+                </div>
+                <p class="text-xs text-slate-200 leading-relaxed">${c.text}</p>
+            </div>
+            `;
+        }).join('');
+    }
+
+    function deleteVolume(novelId, volumeId) {
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel) return;
+
+        const vol = (novel.volumes || []).find(function(v) { return v.id === volumeId; });
+        const volName = vol ? vol.title : 'Bu cildi';
+
+        if (confirm('"' + volName + '" silinsin mi? Bu ciltteki bölümler silinmez, sadece ciltsiz bölümlere aktarılır.')) {
+            novel.volumes = (novel.volumes || []).filter(function(v) { return v.id !== volumeId; });
+            (novel.chapters || []).forEach(function(chap) {
+                if (chap.volumeId === volumeId) {
+                    chap.volumeId = null;
+                }
+            });
+
+            if (window.saveNovelToCloud) {
+                window.saveNovelToCloud(novel);
+            }
+
+            delete window.collapsedVolumes[volumeId];
+            openNovelDetail(novelId, false);
+            alertModal('Cilt Silindi', 'Cilt kaldırıldı ve bölümler ciltsiz listeye aktarıldı.');
+        }
+    }
+
+    function openBulkMoveModal(novelId) {
+        window.activeNovelId = novelId;
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel) return;
+
+        const targetSelect = document.getElementById('bulk-target-volume-select');
+        targetSelect.innerHTML = `<option value="">-- Ciltsiz (Bağımsız Bölümlere Taşı) --</option>`;
+        (novel.volumes || []).forEach(function(v) {
+            targetSelect.innerHTML += `<option value="${v.id}">${v.title}</option>`;
+        });
+
+        const listEl = document.getElementById('bulk-chapters-checkbox-list');
+        const chapters = novel.chapters || [];
+
+        if (chapters.length === 0) {
+            listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-3">Aktarılacak bölüm yok.</p>`;
+        } else {
+            listEl.innerHTML = chapters.map(function(c, i) {
+                return `
+                <label class="flex items-center space-x-2.5 p-2 bg-slate-900 hover:bg-slate-800 rounded-lg cursor-pointer text-xs border border-slate-800/80 transition">
+                    <input type="checkbox" value="${c.id}" data-index="${i + 1}" class="bulk-chap-checkbox rounded accent-indigo-500 w-4 h-4">
+                    <span class="font-bold text-indigo-400 w-8">#${i + 1}</span>
+                    <span class="text-slate-200 truncate flex-1">${c.title}</span>
+                </label>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('bulk-range-start').value = '';
+        document.getElementById('bulk-range-end').value = '';
+        document.getElementById('modal-bulk-move').classList.remove('hidden');
+    }
+
+    function closeBulkMoveModal() {
+        document.getElementById('modal-bulk-move').classList.add('hidden');
+    }
+
+    function toggleSelectAllBulkChapters(select) {
+        const checkboxes = document.querySelectorAll('.bulk-chap-checkbox');
+        for (let i=0; i<checkboxes.length; i++) {
+            checkboxes[i].checked = select;
+        }
+    }
+
+    function applyBulkRangeSelection() {
+        const start = parseInt(document.getElementById('bulk-range-start').value);
+        const end = parseInt(document.getElementById('bulk-range-end').value);
+
+        if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
+            alertModal('Aralık Hatası', 'Lütfen geçerli bir başlangıç ve bitiş numarası girin.');
+            return;
+        }
+
+        const checkboxes = document.querySelectorAll('.bulk-chap-checkbox');
+        for (let i=0; i<checkboxes.length; i++) {
+            const idx = parseInt(checkboxes[i].getAttribute('data-index'));
+            checkboxes[i].checked = (idx >= start && idx <= end);
+        }
+    }
+
+    function handleBulkMoveChapters(e) {
+        e.preventDefault();
+        const novel = window.novels.find(function(n) { return n.id === window.activeNovelId; });
+        if (!novel) return;
+
+        const selectedVolId = document.getElementById('bulk-target-volume-select').value || null;
+        const checkboxes = document.querySelectorAll('.bulk-chap-checkbox:checked');
+
+        if (checkboxes.length === 0) {
+            alertModal('Seçim Yapılmadı', 'Lütfen cilde aktarılacak en az bir bölüm seçin.');
+            return;
+        }
+
+        let selectedIds = [];
+        for (let i=0; i<checkboxes.length; i++) {
+            selectedIds.push(checkboxes[i].value.toString());
+        }
+
+        let movedCount = 0;
+        (novel.chapters || []).forEach(function(chap) {
+            if (selectedIds.includes(chap.id.toString())) {
+                chap.volumeId = selectedVolId;
+                movedCount++;
+            }
+        });
+
+        if (window.saveNovelToCloud) {
+            window.saveNovelToCloud(novel);
+        }
+
+        closeBulkMoveModal();
+        openNovelDetail(window.activeNovelId, false);
+        alertModal('Başarılı', movedCount + ' bölüm seçilen cilde aktarıldı!');
+    }
+
+    function changeChapterPage(page) {
+        currentChapterPage = page;
+        openNovelDetail(window.activeNovelId, false);
+    }
+
+    function openAddVolumeModal(novelId) {
+        window.activeNovelId = novelId;
+        document.getElementById('vol-title-input').value = '';
+        document.getElementById('modal-add-volume').classList.remove('hidden');
+    }
+
+    function closeVolumeModal() {
+        document.getElementById('modal-add-volume').classList.add('hidden');
+    }
+
+    function handlePublishVolume(e) {
+        e.preventDefault();
+        const novel = window.novels.find(function(n) { return n.id === window.activeNovelId; });
+        if (!novel) return;
+
+        const volTitle = document.getElementById('vol-title-input').value.trim();
+        if (!novel.volumes) novel.volumes = [];
+
+        novel.volumes.push({
+            id: 'vol-' + Date.now(),
+            title: volTitle
+        });
+
+        if (window.saveNovelToCloud) {
+            window.saveNovelToCloud(novel);
+        }
+
+        closeVolumeModal();
+        openNovelDetail(window.activeNovelId, false);
+        alertModal('Cilt Eklendi', 'Yeni cilt başarıyla oluşturuldu!');
+    }
+
+    window.openEditChapterModal = function(novelId, chapIndex) {
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel) return;
+
+        editTargetChapterIndex = chapIndex;
+        const chap = novel.chapters[chapIndex];
+
+        const volSelect = document.getElementById('edit-chap-volume-select');
+        volSelect.innerHTML = `<option value="">-- Ciltsiz (Bağımsız Bölüm) --</option>`;
+        if (novel.volumes && novel.volumes.length > 0) {
+            novel.volumes.forEach(function(v) {
+                volSelect.innerHTML += `<option value="${v.id}">${v.title}</option>`;
+            });
+        }
+
+        volSelect.value = chap.volumeId || '';
+        document.getElementById('edit-chap-title-input').value = chap.title;
+        document.getElementById('edit-chap-content-input').value = chap.content;
+
+        document.getElementById('modal-edit-chapter').classList.remove('hidden');
+    };
+
+    window.closeEditChapterModal = function() {
+        document.getElementById('modal-edit-chapter').classList.add('hidden');
+        editTargetChapterIndex = null;
+    };
+
+    window.handleUpdateChapter = function(e) {
+        e.preventDefault();
+        const novel = window.novels.find(function(n) { return n.id === window.activeNovelId; });
+        if (!novel || editTargetChapterIndex === null) return;
+
+        const selectedVol = document.getElementById('edit-chap-volume-select').value;
+        const updatedTitle = document.getElementById('edit-chap-title-input').value.trim();
+        const updatedContent = document.getElementById('edit-chap-content-input').value.trim();
+
+        const targetChap = novel.chapters[editTargetChapterIndex];
+        targetChap.volumeId = selectedVol || null;
+        targetChap.title = updatedTitle;
+        targetChap.content = updatedContent;
+
+        if (window.saveChapterToCloud) {
+            window.saveChapterToCloud(novel.id, targetChap);
+        }
+
+        closeEditChapterModal();
+        renderLatestChapters();
+        openNovelDetail(window.activeNovelId, false);
+        alertModal('Bölüm Güncellendi', 'Bölüm bilgileri ve cilt bağlantısı güncellendi.');
+    };
+
+    function handlePublishNovel(e) {
+        e.preventDefault();
+        const title = document.getElementById('pub-title').value.trim();
+        const genre = document.getElementById('pub-genre').value;
+        const cover = document.getElementById('pub-cover').value.trim();
+        const synopsis = document.getElementById('pub-synopsis').value.trim();
+
+        const newNovel = {
+            id: 'novel-custom-' + Date.now(),
+            title: title,
+            author: "Yönetici",
+            genre: genre,
+            views: "1",
+            cover: cover || window.DEFAULT_COVER,
+            featured: false,
+            synopsis: synopsis,
+            volumes: [],
+            chapters: []
+        };
+
+        window.novels.unshift(newNovel);
+
+        if (window.saveNovelToCloud) {
+            window.saveNovelToCloud(newNovel);
+        }
+
+        closeAuthorModal();
+        renderTrendingNovels();
+        renderFeaturedCarousel();
+        alertModal('Başarılı!', 'Romanınız oluşturuldu ve buluta kaydedildi!');
+        openNovelDetail(newNovel.id);
+    }
+
+    function openEditNovelModal(novelId) {
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel) return;
+
+        document.getElementById('edit-pub-title').value = novel.title;
+        document.getElementById('edit-pub-genre').value = novel.genre;
+        document.getElementById('edit-pub-cover').value = novel.cover;
+        document.getElementById('edit-pub-synopsis').value = novel.synopsis;
+
+        document.getElementById('modal-edit-novel').classList.remove('hidden');
+    }
+
+    function closeEditNovelModal() {
+        document.getElementById('modal-edit-novel').classList.add('hidden');
+    }
+
+    function handleUpdateNovel(e) {
+        e.preventDefault();
+        const novel = window.novels.find(function(n) { return n.id === window.activeNovelId; });
+        if (!novel) return;
+
+        novel.title = document.getElementById('edit-pub-title').value.trim();
+        novel.genre = document.getElementById('edit-pub-genre').value;
+        novel.cover = document.getElementById('edit-pub-cover').value.trim();
+        novel.synopsis = document.getElementById('edit-pub-synopsis').value.trim();
+
+        if (window.saveNovelToCloud) {
+            window.saveNovelToCloud(novel);
+        }
+
+        closeEditNovelModal();
+        renderTrendingNovels();
+        renderFeaturedCarousel();
+        openNovelDetail(window.activeNovelId, false);
+        alertModal('Güncellendi', 'Roman bilgileri güncellendi.');
+    }
+
+    function openInsertImageModal(targetTextareaId) {
+        activeTargetTextareaId = targetTextareaId;
+        document.getElementById('img-url-input').value = '';
+        document.getElementById('modal-insert-image').classList.remove('hidden');
+        document.getElementById('img-url-input').focus();
+    }
+
+    function closeInsertImageModal() {
+        document.getElementById('modal-insert-image').classList.add('hidden');
+    }
+
+    function confirmInsertImage() {
+        const url = document.getElementById('img-url-input').value.trim();
+        if (!url) {
+            alertModal('Uyarı', 'Lütfen geçerli bir görsel bağlantısı girin.');
+            return;
+        }
+
+        const textarea = document.getElementById(activeTargetTextareaId);
+        if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+
+            const tag = `\n[IMG:${url}]\n`;
+            textarea.value = text.substring(0, start) + tag + text.substring(end);
+            textarea.focus();
+        }
+
+        closeInsertImageModal();
+    }
+
+    window.toggleChapterLock = function(novelId, chapIndex) {
+        if (!isAdminAuthenticated) return;
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel || !novel.chapters[chapIndex]) return;
+
+        const chap = novel.chapters[chapIndex];
+        chap.isLocked = !chap.isLocked;
+
+        let savedLocks = JSON.parse(localStorage.getItem('novelia_custom_locks') || '{}');
+        if (!savedLocks[novelId]) savedLocks[novelId] = {};
+        savedLocks[novelId][chap.id] = chap.isLocked;
+        localStorage.setItem('novelia_custom_locks', JSON.stringify(savedLocks));
+
+        openNovelDetail(novelId, false);
+    };
+
+    function deleteChapter(novelId, chapIndex) {
+        if (!isAdminAuthenticated) return;
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel) return;
+
+        const chapToDelete = novel.chapters[chapIndex];
+
+        if (confirm('"' + chapToDelete.title + '" bölümünü silmek istediğinize emin misiniz?')) {
+            novel.chapters.splice(chapIndex, 1);
+
+            if (window.deleteChapterFromCloud) {
+                window.deleteChapterFromCloud(novelId, chapToDelete.id);
+            }
+
+            renderLatestChapters();
+            openNovelDetail(novelId, false);
+            alertModal('Silindi', 'Bölüm başarıyla silindi.');
+        }
+    }
+
+    window.watchRewardedAdToUnlock = function() {
+        if (window.AndroidAds && typeof window.AndroidAds.showInterstitial === 'function') {
+            window.AndroidAds.showInterstitial();
+        }
+        document.getElementById('modal-rewarded-lock').classList.add('hidden');
+
+        chapterReadCount = 1;
+
+        if (pendingChapterNavParams) {
+            openChapterInternal(pendingChapterNavParams.novelId, pendingChapterNavParams.chapterIndex, pendingChapterNavParams.pushHistory);
+            pendingChapterNavParams = null;
+        }
+    };
+
+    window.unlockWithCoins = function(cost) {
+        if (!currentUser) {
+            alertModal('Üyelik Gerekli', 'Jeton kullanmak için lütfen giriş yapın.');
+            return;
+        }
+
+        if (userCoinBalance >= cost) {
+            userCoinBalance -= cost;
+            updateCoinUI();
+            document.getElementById('modal-rewarded-lock').classList.add('hidden');
+            alertModal('Kilit Açıldı', cost + ' Jeton harcanarak bölüm kilidi açıldı.');
+
+            chapterReadCount = 1;
+
+            if (pendingChapterNavParams) {
+                openChapterInternal(pendingChapterNavParams.novelId, pendingChapterNavParams.chapterIndex, pendingChapterNavParams.pushHistory);
+                pendingChapterNavParams = null;
+            }
+        } else {
+            alertModal('Yetersiz Jeton', 'Kilidi açmak için ' + cost + ' jeton gerekiyor. Lütfen mağazadan jeton satın alın.');
+            document.getElementById('modal-rewarded-lock').classList.add('hidden');
+            openCoinShopModal();
+        }
+    };
+
+    window.cancelRewardedUnlock = function() {
+        document.getElementById('modal-rewarded-lock').classList.add('hidden');
+        pendingChapterNavParams = null;
+    };
+
+    window.unlockPremiumChapter = function() {
+        if (!pendingPremiumUnlockParams) return;
+        const cost = 5;
+
+        if (!currentUser) {
+            alertModal('Üyelik Gerekli', 'Jeton kullanmak için lütfen giriş yapın.');
+            return;
+        }
+
+        if (userCoinBalance >= cost) {
+            userCoinBalance -= cost;
+            updateCoinUI();
+
+            const novelId = pendingPremiumUnlockParams.novelId;
+            const chapterIndex = pendingPremiumUnlockParams.chapterIndex;
+            const pushHistory = pendingPremiumUnlockParams.pushHistory;
+            const novel = window.novels.find(function(n) { return n.id === novelId; });
+            const chap = novel.chapters[chapterIndex];
+
+            if (!premiumUnlockedMap[novelId]) premiumUnlockedMap[novelId] = [];
+            premiumUnlockedMap[novelId].push(chap.id.toString());
+            localStorage.setItem('novelia_premium_unlocked', JSON.stringify(premiumUnlockedMap));
+
+            document.getElementById('modal-premium-lock').classList.add('hidden');
+            alertModal('Bölüm Açıldı', '10 Jeton harcandı. İyi okumalar!');
+
+            openChapterInternal(novelId, chapterIndex, pushHistory);
+            pendingPremiumUnlockParams = null;
+        } else {
+            alertModal('Yetersiz Jeton', 'Bu bölümü açmak için ' + cost + ' jeton gerekiyor. Lütfen mağazadan jeton satın alın.');
+            document.getElementById('modal-premium-lock').classList.add('hidden');
+            openCoinShopModal();
+        }
+    };
+
+    window.closePremiumLockModal = function() {
+        document.getElementById('modal-premium-lock').classList.add('hidden');
+        pendingPremiumUnlockParams = null;
+    };
+
+    function openChapter(novelId, chapterIndex, pushHistory = true) {
+        if (isAdminAuthenticated) {
+            openChapterInternal(novelId, chapterIndex, pushHistory);
+            return;
+        }
+
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel || !novel.chapters || !novel.chapters[chapterIndex]) return;
+        const chap = novel.chapters[chapterIndex];
+
+        if (chap.isLocked) {
+            const isUnlocked = premiumUnlockedMap[novelId] && premiumUnlockedMap[novelId].includes(chap.id.toString());
+            if (!isUnlocked) {
+                if (!currentUser) {
+                    alertModal('Üyelik Gerekli', 'Kilitli premium bölümleri açmak için lütfen Okuyucu Hesabı ile giriş yapın.');
+                    navigateTo('profile');
+                    return;
+                }
+                pendingPremiumUnlockParams = { novelId: novelId, chapterIndex: chapterIndex, pushHistory: pushHistory };
+                document.getElementById('modal-premium-lock').classList.remove('hidden');
+                return;
+            }
+        }
+
+        if (chapterReadCount >= 3 && !chap.isLocked) {
+            pendingChapterNavParams = { novelId: novelId, chapterIndex: chapterIndex, pushHistory: pushHistory };
+            document.getElementById('modal-rewarded-lock').classList.remove('hidden');
+            return;
+        }
+
+        chapterReadCount++;
+        openChapterInternal(novelId, chapterIndex, pushHistory);
+    }
+
+    function openChapterInternal(novelId, chapterIndex, pushHistory = true) {
+        window.activeNovelId = novelId;
+        window.activeChapterIndex = chapterIndex;
+        const novel = window.novels.find(function(n) { return n.id === novelId; });
+        if (!novel || !novel.chapters || !novel.chapters[chapterIndex]) return;
+
+        const chap = novel.chapters[chapterIndex];
+
+        document.getElementById('reader-novel-title').innerText = novel.title;
+        document.getElementById('reader-chapter-title').innerText = chap.title;
+        document.getElementById('reader-meta-chapter-num').innerText = 'Bölüm ' + (chapterIndex + 1);
+        document.getElementById('reader-meta-chapter-name').innerText = chap.title;
+
+        const paragraphs = chap.content.split('\n');
+        let formattedContent = '';
+
+        paragraphs.forEach(function(p) {
+            const trimmed = p.trim();
+            if (!trimmed) return;
+
+            const imgMatch = trimmed.match(/^\[IMG:(.*?)\]$/);
+            if (imgMatch) {
+                const src = imgMatch[1];
+                formattedContent += `<div class="my-6"><img src="${src}" class="w-full max-h-[500px] object-cover rounded-2xl shadow-xl mx-auto border border-slate-700/50" onerror="this.src=window.DEFAULT_COVER"></div>`;
+            } else {
+                formattedContent += `<p class="leading-relaxed mb-4">${trimmed}</p>`;
+            }
+        });
+
+        document.getElementById('reader-text-container').innerHTML = formattedContent;
+
+        const prevBtn = document.getElementById('btn-prev-chap');
+        const nextBtn = document.getElementById('btn-next-chap');
+        if (prevBtn) prevBtn.disabled = chapterIndex <= 0;
+        if (nextBtn) nextBtn.disabled = chapterIndex >= novel.chapters.length - 1;
+
+        readingHistory = readingHistory.filter(function(h) { return h.novelId !== novelId; });
+        readingHistory.unshift({
+            novelId: novelId,
+            chapterIndex: chapterIndex,
+            timestamp: Date.now()
+        });
+        localStorage.setItem('novelia_history', JSON.stringify(readingHistory));
+
+        if (!readChaptersMap[novelId]) readChaptersMap[novelId] = [];
+        const chapIdStr = chap.id.toString();
+        if (!readChaptersMap[novelId].includes(chapIdStr)) {
+            readChaptersMap[novelId].push(chapIdStr);
+            localStorage.setItem('novelia_read_chapters', JSON.stringify(readChaptersMap));
+        }
+
+        renderChapterComments();
+
+        if (window.speechSynthesis && isSpeaking) {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            const ttsBtn = document.getElementById('btn-tts');
+            if (ttsBtn) ttsBtn.classList.remove('text-amber-400', 'animate-pulse');
+        }
+
+        if (pushHistory) {
+            pushNavState('reader-' + novelId + '-' + chapterIndex);
+        }
+
+        navigateTo('reader', false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function exitReader() {
+        if (window.speechSynthesis && isSpeaking) {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+        }
+        if (window.activeNovelId) {
+            openNovelDetail(window.activeNovelId);
+        } else {
+            navigateTo('home');
+        }
+    }
+
+    function navigateChapter(dir) {
+        const novel = window.novels.find(function(n) { return n.id === window.activeNovelId; });
+        if (!novel) return;
+        const newIndex = window.activeChapterIndex + dir;
+        if (newIndex >= 0 && newIndex < novel.chapters.length) {
+            openChapter(window.activeNovelId, newIndex);
+        }
+    }
+
+    function toggleAudioReader() {
+        const synth = window.speechSynthesis || (window.webkitSpeechSynthesis ? window.webkitSpeechSynthesis : null);
+        if (!synth) {
+            alertModal('Sesli Okuma', 'Cihazınızda sesli okuma motoru desteklenmiyor.');
+            return;
+        }
+
+        const ttsBtn = document.getElementById('btn-tts');
+
+        if (isSpeaking) {
+            synth.cancel();
+            isSpeaking = false;
+            ttsBtn.classList.remove('text-amber-400', 'animate-pulse');
+            ttsBtn.classList.add('text-indigo-400');
+        } else {
+            const text = document.getElementById('reader-text-container').innerText;
+            if (!text || text.trim().length === 0) {
+                alertModal('Sesli Okuma', 'Okunacak metin bulunamadı.');
+                return;
+            }
+
+            synth.cancel();
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = 'tr-TR';
+            currentUtterance.rate = 1.0;
+
+            currentUtterance.onend = function() {
+                isSpeaking = false;
+                ttsBtn.classList.remove('text-amber-400', 'animate-pulse');
+                ttsBtn.classList.add('text-indigo-400');
+            };
+
+            currentUtterance.onerror = function(e) {
+                console.warn("TTS Error:", e);
+                isSpeaking = false;
+                ttsBtn.classList.remove('text-amber-400', 'animate-pulse');
+                ttsBtn.classList.add('text-indigo-400');
+            };
+
+            synth.speak(currentUtterance);
+            isSpeaking = true;
+            ttsBtn.classList.remove('text-indigo-400');
+            ttsBtn.classList.add('text-amber-400', 'animate-pulse');
+        }
+    }
+
+    function toggleReaderSettingsModal() {
+        const modal = document.getElementById('modal-reader-settings');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            setTimeout(function() { modal.classList.remove('opacity-0'); }, 10);
+        } else {
+            modal.classList.add('opacity-0');
+            setTimeout(function() { modal.classList.add('hidden'); }, 200);
+        }
+    }
+
+    function setReaderTheme(theme) {
+        const readerView = document.getElementById('view-reader');
+        readerView.classList.remove('theme-dark', 'theme-oled', 'theme-sepia', 'theme-light');
+        readerView.classList.add('theme-' + theme);
+        readerSettings.theme = theme;
+    }
+
+    function setReaderFont(fontClass) {
+        const textContainer = document.getElementById('reader-text-container');
+        textContainer.classList.remove('font-sans', 'font-serif', 'font-mono');
+        textContainer.classList.add(fontClass);
+        readerSettings.font = fontClass;
+    }
+
+    function changeFontSize(size) {
+        document.getElementById('font-size-label').innerText = size + 'px';
+        document.getElementById('reader-text-container').style.fontSize = size + 'px';
+        readerSettings.fontSize = size;
+    }
+
+    function addChapterComment() {
+        const input = document.getElementById('reader-comment-input');
+        const commentText = input.value.trim();
+        if (!commentText) return;
+
+        const userName = currentUser ? currentUser.username : "Misafir Okuyucu";
+        const key = window.activeNovelId + '-' + window.activeChapterIndex;
+
+        const commentObj = {
+            user: userName,
+            text: commentText,
+            time: "Şimdi"
+        };
+
+        if (window.saveCommentToCloud) {
+            window.saveCommentToCloud(key, commentObj);
+        } else {
+            if (!window.chapterComments[key]) window.chapterComments[key] = [];
+            window.chapterComments[key].unshift(commentObj);
+            renderChapterComments();
+        }
+
+        input.value = '';
+    }
+
+    function renderChapterComments() {
+        const key = window.activeNovelId + '-' + window.activeChapterIndex;
+        const comments = window.chapterComments[key] || [];
+
+        const list = document.getElementById('reader-comments-list');
+        if (!list) return;
+
+        if (comments.length === 0) {
+            list.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">Henüz yorum yapılmamış. İlk yorumu siz yapın!</p>`;
+            return;
+        }
+
+        list.innerHTML = comments.map(function(c) {
+            return `
+            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                <div class="flex justify-between text-[10px] text-indigo-400 font-bold mb-1">
+                    <span>${c.user}</span>
+                    <span class="text-slate-500 font-normal">${c.time}</span>
+                </div>
+                <p class="text-xs text-slate-300">${c.text}</p>
+            </div>
+            `;
+        }).join('');
+    }
+
+    function switchLibraryTab(tab) {
+        currentLibraryTab = tab;
+        const favBtn = document.getElementById('tab-btn-favorites');
+        const histBtn = document.getElementById('tab-btn-history');
+
+        if (tab === 'favorites') {
+            favBtn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition";
+            histBtn.className = "px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+        } else {
+            histBtn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition";
+            favBtn.className = "px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+        }
+
+        renderLibrary();
+    }
+
+    function renderLibrary() {
+        const container = document.getElementById('library-novels-grid');
+        if (!container) return;
+
+        let items = [];
+        if (currentLibraryTab === 'favorites') {
+            items = window.novels.filter(function(n) { return favorites.includes(n.id); });
+        } else {
+            items = readingHistory.map(function(h) { return window.novels.find(function(n) { return n.id === h.novelId; }); }).filter(Boolean);
+        }
+
+        if (items.length === 0) {
+            container.innerHTML = `<div class="col-span-2 text-center py-10 text-xs text-slate-500">Bu alanda henüz roman yok.</div>`;
+            return;
+        }
+
+        container.innerHTML = items.map(function(n) {
+            return `
+            <div onclick="openNovelDetail('${n.id}')" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:border-indigo-500/50 transition">
+                <img src="${n.cover}" class="w-full h-36 object-cover" onerror="this.src=window.DEFAULT_COVER">
+                <div class="p-2.5">
+                    <h4 class="text-xs font-bold text-white truncate">${n.title}</h4>
+                    <span class="text-[10px] text-indigo-400 font-medium">${n.genre}</span>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    function clearHistory() {
+        readingHistory = [];
+        readChaptersMap = {};
+        localStorage.removeItem('novelia_history');
+        localStorage.removeItem('novelia_read_chapters');
+        renderResumeReading();
+        renderLibrary();
+        alertModal('Geçmiş Temizlendi', 'Okuma geçmişiniz silindi.');
+    }
+
+    function openAuthorModal() {
+        const modal = document.getElementById('modal-author');
+        modal.classList.remove('hidden');
+
+        const authBox = document.getElementById('admin-auth-box');
+        const authorForm = document.getElementById('author-form');
+
+        if (isAdminAuthenticated) {
+            authBox.classList.add('hidden');
+            authorForm.classList.remove('hidden');
+        } else {
+            authBox.classList.remove('hidden');
+            authorForm.classList.add('hidden');
+        }
+    }
+
+    function closeAuthorModal() {
+        document.getElementById('modal-author').classList.add('hidden');
+    }
+
+    function toggleSearchModal() {
+        const modal = document.getElementById('modal-search');
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden')) {
+            document.getElementById('search-input').focus();
+        }
+    }
+
+    function handleSearch(query) {
+        const resultsEl = document.getElementById('search-results');
+        if (!query.trim()) {
+            resultsEl.innerHTML = '';
+            return;
+        }
+
+        const matches = window.novels.filter(function(n) {
+            return n.title.toLowerCase().includes(query.toLowerCase());
+        });
+
+        if (matches.length === 0) {
+            resultsEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Sonuç bulunamadı.</p>`;
+            return;
+        }
+
+        resultsEl.innerHTML = matches.map(function(n) {
+            return `
+            <div onclick="toggleSearchModal(); openNovelDetail('${n.id}')" class="p-3 bg-slate-800/80 rounded-xl flex items-center space-x-3 cursor-pointer hover:bg-slate-700 transition">
+                <img src="${n.cover}" class="w-10 h-12 object-cover rounded-lg" onerror="this.src=window.DEFAULT_COVER">
+                <div>
+                    <h4 class="text-xs font-bold text-white">${n.title}</h4>
+                    <span class="text-[10px] text-indigo-400 font-medium">${n.genre}</span>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    function alertModal(title, msg) {
+        document.getElementById('alert-title').innerText = title;
+        document.getElementById('alert-msg').innerText = msg;
+        document.getElementById('modal-alert').classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+        document.getElementById('modal-alert').classList.add('hidden');
+    }
+
+    function updateStats() {
+        const statEl = document.getElementById('stat-read-count');
+        if (statEl) statEl.innerText = favorites.length;
+    }
+
+    // --- GEMINI AI INTEGRATION ---
+    async function callGeminiAPI(prompt, systemInstruction = "") {
+        const apiKey = "";
+        const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey;
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+
+        if (systemInstruction) {
+            payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+        }
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (result.candidates && result.candidates.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            }
+            throw new Error("Geçersiz API yanıtı");
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+            throw error;
+        }
+    }
+
+    window.generateSynopsisAI = async function(titleId, genreId, targetId) {
+        const title = document.getElementById(titleId).value.trim();
+        const genre = document.getElementById(genreId).value;
+        if (!title) return alertModal('Uyarı', 'AI özeti üretebilmek için lütfen önce roman başlığını doldurun.');
+
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Üretiliyor...';
+        btn.disabled = true;
+
+        const prompt = 'Roman Adı: ' + title + '\nTür: ' + genre + '\nLütfen bu roman için okuyucunun ilgisini çekecek, yaratıcı ve merak uyandıran 2-3 paragraflık bir arka kapak yazısı (synopsis) oluştur.';
+        const sysPrompt = "Sen usta bir Light Novel ve Web Novel yazarısın. İlgi çekici arka kapak yazıları hazırlamakta uzmansın. Doğrudan özet metnini ver, giriş/çıkış cümlesi kullanma.";
+
+        try {
+            const result = await callGeminiAPI(prompt, sysPrompt);
+            document.getElementById(targetId).value = result;
+            alertModal('Başarılı', 'AI tarafından yeni bir roman konusu üretildi!');
+        } catch (e) {
+            alertModal('Hata', 'AI konusu üretilemedi. Geçerli bir API anahtarı ayarlanmamış olabilir veya ağ hatası oluştu.');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    };
+
+    window.improveChapterTextAI = async function(targetId) {
+        const textarea = document.getElementById(targetId);
+        const text = textarea.value.trim();
+        if (!text) return alertModal('Uyarı', 'Geliştirilecek metin bulunamadı. Lütfen editöre bir şeyler yazın.');
+
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Geliştiriliyor...';
+        btn.disabled = true;
+
+        const prompt = 'Aşağıdaki roman bölüm metninin dilbilgisi hatalarını düzelt, edebi akıcılığını artır ve okuması daha zevkli bir yazar diliyle yeniden yaz. Sadece düzeltilmiş tam metni ver:\n\n' + text;
+        const sysPrompt = "Sen usta bir roman editörü ve yazarsın. Yazım hatalarını düzeltir, cümleleri daha akıcı, betimleyici ve edebi hale getirirsin. Asla metnin anlamını değiştirme, sadece kalitesini artır.";
+
+        try {
+            const result = await callGeminiAPI(prompt, sysPrompt);
+            textarea.value = result;
+            alertModal('Başarılı', 'Bölüm metni AI editörü tarafından geliştirildi ve hatalar düzeltildi!');
+        } catch (e) {
+            alertModal('Hata', 'Metin geliştirilemedi. Çok uzun olabilir, ağ bağlantısı başarısız veya API anahtarı eksik.');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    };
+
+    window.summarizeChapterAI = async function() {
+        const textContainer = document.getElementById('reader-text-container');
+        const text = textContainer.innerText;
+
+        if (!text || text.length < 100) return alertModal('Uyarı', 'Özet çıkarılabilecek kadar uzun bir metin bulunmuyor.');
+
+        document.getElementById('ai-modal-content').innerHTML = `
+            <div class="flex flex-col items-center py-6 space-y-3">
+                <i class="fa-solid fa-spinner fa-spin text-3xl text-amber-400"></i>
+                <p class="text-xs font-semibold text-slate-300">Yapay Zeka bölümü okuyor ve özetliyor...</p>
+            </div>
+        `;
+        document.getElementById('modal-ai-summary').classList.remove('hidden');
+
+        const truncatedText = text.length > 6000 ? text.substring(0, 6000) + "..." : text;
+        const prompt = 'Şu bölüm metnini okuyan biri için, yaşanan ana olayları ve kritik detayları 3-4 cümleyle kısa ve öz şekilde özetle:\n\n' + truncatedText;
+        const sysPrompt = "Sen bir okuma asistanısın. Görevin, uzun bölüm metinlerindeki ana fikri, kritik diyalogları ve yaşanan olayları çok net ve kısa bir şekilde okuyucuya sunmaktır.";
+
+        try {
+            const result = await callGeminiAPI(prompt, sysPrompt);
+            document.getElementById('ai-modal-content').innerHTML = '<p class="text-xs leading-relaxed text-slate-200">' + result.replace(/\n/g, '<br>') + '</p>';
+        } catch (e) {
+            document.getElementById('ai-modal-content').innerHTML = `<p class="text-xs text-rose-400 text-center py-4 font-semibold">Özet oluşturulurken bir ağ hatası meydana geldi veya API anahtarı eksik. Lütfen tekrar deneyin.</p>`;
+        }
+    };
+
+    window.closeAISummaryModal = function() {
+        document.getElementById('modal-ai-summary').classList.add('hidden');
+    };
+
+    try {
+        initApp();
+    } catch(e) {
+        console.error(e);
+    }
+</script>
+</body>
+</html>
