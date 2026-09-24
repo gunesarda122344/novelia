@@ -1629,10 +1629,34 @@
         }).join('');
     }
 
-    function openNovelDetail(novelId, pushHistory = true) {
+  async  function openNovelDetail(novelId, pushHistory = true) {
         window.activeNovelId = novelId;
         const novel = window.novels.find(function(n) { return n.id === novelId; });
         if (!novel) return;
+      // --- ALT KOLEKSİYONDAN BÖLÜMLERİ ÇEKİP BİRLEŞTİRME ---
+    try {
+        if (typeof collection !== 'undefined' && typeof getDocs !== 'undefined') {
+            const subChaptersRef = collection(db, 'artifacts', appId, 'public', 'data', 'novels', novelId, 'chapters');
+            const subSnap = await getDocs(subChaptersRef);
+            if (!subSnap.empty) {
+                if (!novel.chapters) novel.chapters = [];
+                subSnap.forEach(function(docSnap) {
+                    const cData = docSnap.data();
+                    const existIdx = novel.chapters.findIndex(function(item) { 
+                        return String(item.id) === String(cData.id || docSnap.id); 
+                    });
+                    if (existIdx !== -1) {
+                        novel.chapters[existIdx] = Object.assign({}, novel.chapters[existIdx], cData);
+                    } else {
+                        novel.chapters.push(cData);
+                    }
+                });
+            }
+        }
+    } catch (err) {
+        console.warn("Alt koleksiyon bölümleri çekilirken uyarı:", err);
+    }
+    // ----------------------------------------------------
 
         const container = document.getElementById('detail-hero');
         const isFav = favorites.includes(novelId);
