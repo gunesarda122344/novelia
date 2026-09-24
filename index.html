@@ -866,6 +866,8 @@
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    window.collection = collection;
+window.getDocs = getDocs;
     const appId = 'novelia-app';
     const firebaseConfig = {
         apiKey: "AIzaSyCS_iDrMRSbMg1irrVT4UWIZUlZkmgzSlE",
@@ -1634,10 +1636,11 @@
         const novel = window.novels.find(function(n) { return n.id === novelId; });
         if (!novel) return;
       // --- ALT KOLEKSİYONDAN BÖLÜMLERİ ÇEKİP BİRLEŞTİRME ---
+    // --- ALT KOLEKSİYONDAN BÖLÜMLERİ ÇEKİP BİRLEŞTİRME ---
     try {
-        if (typeof collection !== 'undefined' && typeof getDocs !== 'undefined') {
-            const subChaptersRef = collection(db, 'artifacts', appId, 'public', 'data', 'novels', novelId, 'chapters');
-            const subSnap = await getDocs(subChaptersRef);
+        if (window.collection && window.getDocs) {
+            const subChaptersRef = window.collection(db, 'artifacts', appId, 'public', 'data', 'novels', novelId, 'chapters');
+            const subSnap = await window.getDocs(subChaptersRef);
             if (!subSnap.empty) {
                 if (!novel.chapters) novel.chapters = [];
                 subSnap.forEach(function(docSnap) {
@@ -1656,6 +1659,7 @@
     } catch (err) {
         console.warn("Alt koleksiyon bölümleri çekilirken uyarı:", err);
     }
+    // ----------------------------------------------------
     // ----------------------------------------------------
 
         const container = document.getElementById('detail-hero');
