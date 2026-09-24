@@ -1027,16 +1027,27 @@
         }
     };
 
-    window.saveChapterToCloud = async function(novelId, chapter) {
-        try {
-            const novel = window.novels.find(n => n.id === novelId);
-            if (novel) {
-                await window.saveNovelToCloud(novel);
-            }
-        } catch (e) {
-            console.error("Error saving chapter to cloud:", e);
-        }
-    };
+   window.saveChapterToCloud = async function(novelId, updatedChapter) {
+  try {
+    const chapterRef = doc(
+      db,
+      "artifacts",
+      appId,
+      "public",
+      "data",
+      "novels",
+      novelId,
+      "chapters",
+      String(updatedChapter.id),
+    );
+    await setDoc(chapterRef, updatedChapter, { merge: true });
+    console.log("Bölüm başarıyla kaydedildi!");
+    alert("Bölüm başarıyla kaydedildi.");
+  } catch (e) {
+    console.error("Bölüm kaydedilemedi:", e);
+    alert("Hata: " + e.message);
+  }
+};
 
     window.deleteChapterFromCloud = async function(novelId, chapterId) {
         try {
