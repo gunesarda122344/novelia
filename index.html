@@ -1021,14 +1021,29 @@ window.getDocs = getDocs;
 
     initCloudAuth();
 
-    window.saveNovelToCloud = async function(novel) {
-        try {
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'novels', novel.id);
-            await setDoc(docRef, novel, { merge: true });
-        } catch (e) {
-            console.error("Error saving novel to cloud:", e);
+   window.saveNovelToCloud = async function(novel) {
+    try {
+        const fireDb = window.db || (typeof db !== 'undefined' ? db : null);
+        const myAppId = window.appId || (typeof appId !== 'undefined' ? appId : 'novelia-app');
+        if (!fireDb || !novel || !novel.id) return;
+
+        // Ana dokümanı 5.8 MB yapıp kaydetmeyi engelleyen bölümleri hariç tutuyoruz
+        const novelDataToSave = Object.assign({}, novel);
+        delete novelDataToSave.chapters;
+
+        const docFn = window.doc || (typeof doc !== 'undefined' ? doc : null);
+        const setDocFn = window.setDoc || (typeof setDoc !== 'undefined' ? setDoc : null);
+
+        if (docFn && setDocFn) {
+            const novelRef = docFn(fireDb, 'artifacts', myAppId, 'public', 'data', 'novels', String(novel.id));
+            await setDocFn(novelRef, novelDataToSave, { merge: true });
+            console.log("Roman bilgileri başarıyla buluta kaydedildi!");
         }
-    };
+    } catch (e) {
+        console.error("Roman kaydedilirken hata:", e);
+        alert("Kapak kaydedilemedi: " + e.message);
+    }
+};
 
    window.saveChapterToCloud = async function(novelId, updatedChapter) {
   try {
