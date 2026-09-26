@@ -869,6 +869,7 @@
     window.collection = collection;
 window.getDocs = getDocs;
     const appId = 'novelia-app';
+    window.appId = appId;
     const firebaseConfig = {
         apiKey: "AIzaSyCS_iDrMRSbMg1irrVT4UWIZUlZkmgzSlE",
         authDomain: "novelia-b8cd0.firebaseapp.com",
@@ -1635,18 +1636,20 @@ window.getDocs = getDocs;
         window.activeNovelId = novelId;
         const novel = window.novels.find(function(n) { return n.id === novelId; });
         if (!novel) return;
-      // --- ALT KOLEKSİYONDAN BÖLÜMLERİ ÇEKİP BİRLEŞTİRME ---
-    // --- ALT KOLEKSİYONDAN BÖLÜMLERİ ÇEKİP BİRLEŞTİRME ---
+     // --- ALT KOLEKSİYONDAN BÖLÜMLERİ ÇEKİP BİRLEŞTİRME ---
     try {
-        if (window.collection && window.getDocs) {
-            const subChaptersRef = window.collection(db, 'artifacts', appId, 'public', 'data', 'novels', novelId, 'chapters');
+        const fireDb = window.db || (typeof db !== 'undefined' ? db : null);
+        const myAppId = window.appId || 'novelia-app';
+        if (window.collection && window.getDocs && fireDb && novelId) {
+            const subChaptersRef = window.collection(fireDb, 'artifacts', myAppId, 'public', 'data', 'novels', String(novelId), 'chapters');
             const subSnap = await window.getDocs(subChaptersRef);
             if (!subSnap.empty) {
                 if (!novel.chapters) novel.chapters = [];
                 subSnap.forEach(function(docSnap) {
                     const cData = docSnap.data();
+                    const targetId = String(cData.id || docSnap.id);
                     const existIdx = novel.chapters.findIndex(function(item) { 
-                        return String(item.id) === String(cData.id || docSnap.id); 
+                        return String(item.id) === targetId; 
                     });
                     if (existIdx !== -1) {
                         novel.chapters[existIdx] = Object.assign({}, novel.chapters[existIdx], cData);
@@ -1657,9 +1660,8 @@ window.getDocs = getDocs;
             }
         }
     } catch (err) {
-        console.warn("Alt koleksiyon bölümleri çekilirken uyarı:", err);
+        console.error("Alt koleksiyon bölümleri çekilirken hata:", err);
     }
-    // ----------------------------------------------------
     // ----------------------------------------------------
 
         const container = document.getElementById('detail-hero');
